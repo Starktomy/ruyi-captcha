@@ -136,14 +136,34 @@ def measure(variant, concurrency, repetition, parent):
 
 
 def main(args):
-    root, old_shell, old_helper = args.kernel.resolve(), args.old_shell.resolve(), args.old_helper.resolve()
+    root = args.kernel.resolve()
     current_shell = root / "dist/js"
     helper = root / "vendor/necko-derived/python/bin/python3"
-    variants = [
-        {"name": "new_minimal", "shell": str(current_shell), "helper": str(helper)},
-        {"name": "old_full", "shell": str(old_shell), "helper": str(old_helper)},
-        {"name": "old_full_new_helper", "shell": str(old_shell), "helper": str(helper)},
-    ]
+    if args.variants_json:
+        variants = json.loads(args.variants_json.read_text())
+        if not isinstance(variants, list) or len(variants) < 2:
+            raise ValueError("variants JSON must contain at least two variants")
+        names = set()
+        for variant in variants:
+            if not isinstance(variant, dict) or set(variant) != {"name", "shell", "helper"}:
+                raise ValueError("Each variant must contain name, shell and helper")
+            name = variant["name"]
+            if not isinstance(name, str) or not name or name in names:
+                raise ValueError("Variant names must be nonempty and unique")
+            names.add(name)
+            for key in ("shell", "helper"):
+                path = Path(variant[key]).resolve()
+                if not path.is_file():
+                    raise ValueError(f"Variant {name}: missing {key}")
+                variant[key] = str(path)
+    else:
+        if args.old_shell is None or args.old_helper is None:
+            raise ValueError("Supply --variants-json or both --old-shell and --old-helper")
+        variants = [
+            {"name": "new_minimal", "shell": str(current_shell), "helper": str(helper)},
+            {"name": "old_full", "shell": str(args.old_shell.resolve()), "helper": str(args.old_helper.resolve())},
+            {"name": "old_full_new_helper", "shell": str(args.old_shell.resolve()), "helper": str(helper)},
+        ]
     for variant in variants:
         variant["shell_sha256"] = digest(variant["shell"])
     parent_path = next(line.split(":", 2)[2] for line in Path('/proc/self/cgroup').read_text().splitlines()
@@ -175,7 +195,8 @@ def main(args):
     index = 0
     for repetition in (1,2,3):
         for concurrency in (1,2,4):
-            order = variants[index%3:] + variants[:index%3]
+            offset = index % len(variants)
+            order = variants[offset:] + variants[:offset]
             if index%2:
                 order = list(reversed(order))
             index += 1
@@ -213,6 +234,7 @@ if __name__ == '__main__':
     parser.add_argument('--kernel', type=Path, default=Path('/root/ff-ruyijs'))
     parser.add_argument('--old-shell', type=Path)
     parser.add_argument('--old-helper', type=Path)
+    parser.add_argument('--variants-json', type=Path, help='Array of {name,shell,helper} variants for controlled patch comparisons')
     parser.add_argument('--output', type=Path, default=Path('artifacts/runtime-comparison.json'))
     args = parser.parse_args()
     worker(args.shell, args.concurrency) if args.worker else main(args)

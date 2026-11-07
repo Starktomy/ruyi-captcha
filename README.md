@@ -206,6 +206,9 @@ CLI 固定一个 HTTP worker；并发由上述任务池控制。多实例部署�
 缺失时会跳过。实时 CapSkip 验收脚本放在 `tests/live_capskip.py`，结果只记录长度与
 后台验收状态。架构与迁移说明见 [docs/architecture.zh-CN.md](docs/architecture.zh-CN.md)。
 
+已恢复旧 fork 的通用性能优化；同底座 CPU、PSS、延迟与原始页面验收记录见
+[性能恢复报告](docs/runtime-restoration-20261107.md)。
+
 提交使用 Starktomy 的 GitHub noreply 身份，Codex 作为共同作者。
 本仓库采用 AGPL-3.0-only；内核依赖保留自身许可。
 

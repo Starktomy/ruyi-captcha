@@ -1,12 +1,16 @@
 # 旧 fork 性能补丁与多环境生成器审计
 
-审计基准：旧完整 fork `158eae7`（`backup/main-full-20261107`），当前精简
+审计基准：旧完整 fork `158eae7`（`backup/main-full-20261107`），审计时的精简
 `main` 为 `b9877c4`，基于上游 0.3.5 `0ab7201`。下面的历史收益来自旧版本
 实验，不是逐项恢复到 0.3.5 后的新结果，也不能相加。
 
+上述优化现已合回内核 main：字体／Base64 为 `8d406f5`，样式／布局为 `0ee5069`。
+下面表格保留恢复前的审计情况；融合后的实测与打包锁定见
+[性能恢复报告](runtime-restoration-20261107.md)。
+
 ## 哪些降低资源开销
 
-| 旧提交 | 机制与主要收益 | 当前情况与迁移方式 |
+| 旧提交 | 机制与主要收益 | 恢复前情况与融合要求 |
 | --- | --- | --- |
 | `0f8872c` | Linux 字体按需初始化；同一 JS 线程的 realm 共用 FontCollection；HarfBuzz 读取 Skia 映射的字体数据，减少字体表复制。这是最直接的已测内存优化。 | 当前 `font_posix.cpp` 仍按实例初始化并复制字体表，旧共享／映射路径未恢复。优先迁回内核，保留原有 fallback。 |
 | `d6b3c91` | Fontconfig family/style 匹配独立缓存，与字形 fallback 分开，缓存上限 256 项，减少重复匹配。 | 旧缓存未保留；放在当前 Linux `font_posix.cpp`，保持字体配置更新时失效。 |
@@ -49,7 +53,7 @@
 显示当前 CPU/token 高 15.7%～21.5%、PSS 高 29.9%～35.6%；使用相同 helper
 仍存在差距，但尚未逐项归因。
 
-建议按“字体共享／映射 → Fontconfig／Base64 → CSS 缓存 → shadow/layout”分组恢复。
+本次按“字体共享／映射 → Fontconfig／Base64 → CSS 缓存 → shadow/layout”分组恢复。
 每组先验证行为和缓存失效，再交替测真实负载的 CPU/token、整批 PSS 与后台接受结果。
 保持与上游的差异集中在这些通用能力，避免将验证码站点状态机带回内核。
 
@@ -83,5 +87,5 @@ CLI 支持 `ruyi-captcha profile` 与 `python -m ruyi_captcha.profiles`。
 本次测试还确认：精简内核会将已配置的 WebGL 等 owner group 在新 iframe 中丢失，
 例如父页面为 Linux llvmpipe，子页面却回到 Windows ANGLE 默认值。旧 `bb58104`
 修复已恢复到 `fix/perimeterx-browser-compat` 的 `9b46ad4`，覆盖初始／嵌套 iframe、跨域导航、
-srcdoc、顶层文档替换和 GC。发版锁定的 `main` 内核尚未包含该分支；应用生成器
-不会在 Python 层自行伪造子页面配置。升级发布 pin 前需要单独验收内核变更。
+srcdoc、顶层文档替换和 GC。该修复已随性能恢复合入 main，应用发版 pin 已同步到
+通过验收的新内核；应用生成器继续只生成配置字典。

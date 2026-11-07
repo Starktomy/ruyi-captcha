@@ -1,0 +1,1361 @@
+{
+  "started_at": "2026-11-07T12:37:47.851764+00:00",
+  "variants": [
+    {
+      "name": "baseline_035",
+      "shell": "/root/ff-ruyijs/artifacts/performance-restore-20261107/baseline-js",
+      "helper": "/root/ff-ruyijs/vendor/necko-derived/python/bin/python3",
+      "shell_sha256": "70a41fd67d2dcf23e577fe36d617da11baa6cca98e819b4f12bd920f1ec3a594",
+      "kernel_commit": "9b46ad4474b5b3e03bfaf02f53c362cd93628f95",
+      "helper_executable_sha256": "be9a2a5eada8c89c1c399fdfb8397179e877c20d8db0739c802f726d4d0e69fd"
+    },
+    {
+      "name": "fonts_base64",
+      "shell": "/root/ff-ruyijs/artifacts/performance-restore-20261107/fonts-base64-js",
+      "helper": "/root/ff-ruyijs/vendor/necko-derived/python/bin/python3",
+      "shell_sha256": "4682c7428278a499644bbced52b7fd4a7c3c0d4a97a97a13aea05d872275fa5f",
+      "kernel_commit": "8d406f5ae3173dea828be314ddca1c79600f8c62",
+      "helper_executable_sha256": "be9a2a5eada8c89c1c399fdfb8397179e877c20d8db0739c802f726d4d0e69fd"
+    },
+    {
+      "name": "restored_all",
+      "shell": "/root/ff-ruyijs/dist/js",
+      "helper": "/root/ff-ruyijs/vendor/necko-derived/python/bin/python3",
+      "shell_sha256": "e9e70a85550e190a0983a887762ff593048f7d5d1ed7116feb0077315c5ee958",
+      "kernel_commit": "0ee50696e9b8910401c832982de653e5b38f4e74",
+      "helper_executable_sha256": "be9a2a5eada8c89c1c399fdfb8397179e877c20d8db0739c802f726d4d0e69fd"
+    }
+  ],
+  "machine": {
+    "platform": "Linux-7.0.0-38-generic-x86_64-with-glibc2.43",
+    "affinity_cpus": 5,
+    "logical_cpus": 5,
+    "cpu_model": "AMD EPYC 7643 48-Core Processor"
+  },
+  "method": {
+    "profile": "same linux Firefox 159",
+    "driver": "same ruyi-captcha provider and Python bindings",
+    "measurement": "after imports and capability preflight; fresh Contexts; startup and cleanup included",
+    "cpu": "isolated cgroup cpu.stat; Python caller, runtime, workers and helpers; sampler excluded",
+    "memory": "simultaneous tree PSS/RSS sampled every 50ms, caller included",
+    "backend_verification": false,
+    "attempts": 1,
+    "timeout": 30,
+    "concurrency": [
+      1,
+      2,
+      4
+    ],
+    "repetitions": 3,
+    "order": "rotating and alternating variant order; sequential batches; one warmup per variant",
+    "verification_note": "Resource batches measure real non-dummy token acquisition; backend acceptance is checked separately by tests/live_capskip.py.",
+    "controlled_run": "All variants use the same helper. No builds or other test suites ran concurrently with this measurement."
+  },
+  "warmups": [
+    {
+      "variant": "baseline_035",
+      "concurrency": 1,
+      "repetition": 0,
+      "driver_idle_pss_mib": 17.6015625,
+      "peak_tree_pss_mib": 455.697265625,
+      "peak_tree_rss_mib": 685.3671875,
+      "peak_tree_private_mib": 404.02734375,
+      "peak_processes": 6,
+      "samples": 119,
+      "sampler_cpu_seconds": 1.3874334,
+      "remaining_processes": 0,
+      "cpu_seconds": 5.100508,
+      "cpu_user_seconds": 4.509059,
+      "cpu_system_seconds": 0.591448,
+      "wall_seconds": 5.913031899021007,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 5.90903000801336,
+          "token_length": 645,
+          "attempts": 1
+        }
+      ],
+      "successes": 1,
+      "cpu_seconds_per_call": 5.100508,
+      "average_cpu_cores": 0.8625876009301534
+    },
+    {
+      "variant": "fonts_base64",
+      "concurrency": 1,
+      "repetition": 0,
+      "driver_idle_pss_mib": 17.6142578125,
+      "peak_tree_pss_mib": 404.7978515625,
+      "peak_tree_rss_mib": 548.1640625,
+      "peak_tree_private_mib": 354.9140625,
+      "peak_processes": 6,
+      "samples": 295,
+      "sampler_cpu_seconds": 2.5300278119999997,
+      "remaining_processes": 0,
+      "cpu_seconds": 5.23341,
+      "cpu_user_seconds": 4.637146,
+      "cpu_system_seconds": 0.596264,
+      "wall_seconds": 14.745627886033617,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 14.740691359969787,
+          "token_length": 645,
+          "attempts": 1
+        }
+      ],
+      "successes": 1,
+      "cpu_seconds_per_call": 5.23341,
+      "average_cpu_cores": 0.35491265888764534
+    },
+    {
+      "variant": "restored_all",
+      "concurrency": 1,
+      "repetition": 0,
+      "driver_idle_pss_mib": 17.55078125,
+      "peak_tree_pss_mib": 341.693359375,
+      "peak_tree_rss_mib": 459.2578125,
+      "peak_tree_private_mib": 305.0390625,
+      "peak_processes": 6,
+      "samples": 71,
+      "sampler_cpu_seconds": 0.64727245,
+      "remaining_processes": 0,
+      "cpu_seconds": 4.073407,
+      "cpu_user_seconds": 3.62978,
+      "cpu_system_seconds": 0.443626,
+      "wall_seconds": 3.4956657940056175,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 3.491180435055867,
+          "token_length": 624,
+          "attempts": 1
+        }
+      ],
+      "successes": 1,
+      "cpu_seconds_per_call": 4.073407,
+      "average_cpu_cores": 1.165273581640755
+    }
+  ],
+  "runs": [
+    {
+      "variant": "baseline_035",
+      "concurrency": 1,
+      "repetition": 1,
+      "driver_idle_pss_mib": 17.6201171875,
+      "peak_tree_pss_mib": 476.671875,
+      "peak_tree_rss_mib": 698.37109375,
+      "peak_tree_private_mib": 438.61328125,
+      "peak_processes": 6,
+      "samples": 88,
+      "sampler_cpu_seconds": 0.9359608660000003,
+      "remaining_processes": 0,
+      "cpu_seconds": 4.900817,
+      "cpu_user_seconds": 4.341421,
+      "cpu_system_seconds": 0.559396,
+      "wall_seconds": 4.346126915072091,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 4.342051706044003,
+          "token_length": 645,
+          "attempts": 1
+        }
+      ],
+      "successes": 1,
+      "cpu_seconds_per_call": 4.900817,
+      "average_cpu_cores": 1.1276285980062568
+    },
+    {
+      "variant": "fonts_base64",
+      "concurrency": 1,
+      "repetition": 1,
+      "driver_idle_pss_mib": 17.59765625,
+      "peak_tree_pss_mib": 332.3046875,
+      "peak_tree_rss_mib": 480.5,
+      "peak_tree_private_mib": 280.12109375,
+      "peak_processes": 6,
+      "samples": 79,
+      "sampler_cpu_seconds": 0.8625298990000001,
+      "remaining_processes": 0,
+      "cpu_seconds": 4.681076,
+      "cpu_user_seconds": 4.197396,
+      "cpu_system_seconds": 0.48368,
+      "wall_seconds": 3.9037262579659,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 3.899861825047992,
+          "token_length": 624,
+          "attempts": 1
+        }
+      ],
+      "successes": 1,
+      "cpu_seconds_per_call": 4.681076,
+      "average_cpu_cores": 1.199130187586245
+    },
+    {
+      "variant": "restored_all",
+      "concurrency": 1,
+      "repetition": 1,
+      "driver_idle_pss_mib": 17.6103515625,
+      "peak_tree_pss_mib": 375.1806640625,
+      "peak_tree_rss_mib": 515.96875,
+      "peak_tree_private_mib": 325.3515625,
+      "peak_processes": 6,
+      "samples": 65,
+      "sampler_cpu_seconds": 0.5835580169999997,
+      "remaining_processes": 0,
+      "cpu_seconds": 4.012111,
+      "cpu_user_seconds": 3.610883,
+      "cpu_system_seconds": 0.401227,
+      "wall_seconds": 3.2203985959058627,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 3.216556002967991,
+          "token_length": 624,
+          "attempts": 1
+        }
+      ],
+      "successes": 1,
+      "cpu_seconds_per_call": 4.012111,
+      "average_cpu_cores": 1.245842985120119
+    },
+    {
+      "variant": "baseline_035",
+      "concurrency": 2,
+      "repetition": 1,
+      "driver_idle_pss_mib": 17.564453125,
+      "peak_tree_pss_mib": 745.759765625,
+      "peak_tree_rss_mib": 1281.578125,
+      "peak_tree_private_mib": 651.0,
+      "peak_processes": 9,
+      "samples": 103,
+      "sampler_cpu_seconds": 1.9874582360000002,
+      "remaining_processes": 0,
+      "cpu_seconds": 10.465238,
+      "cpu_user_seconds": 9.262568,
+      "cpu_system_seconds": 1.202669,
+      "wall_seconds": 5.159670266089961,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 5.1527294990373775,
+          "token_length": 645,
+          "attempts": 1
+        },
+        {
+          "index": 1,
+          "success": true,
+          "elapsed": 4.619352958980016,
+          "token_length": 645,
+          "attempts": 1
+        }
+      ],
+      "successes": 2,
+      "cpu_seconds_per_call": 5.232619,
+      "average_cpu_cores": 2.028276509989201
+    },
+    {
+      "variant": "restored_all",
+      "concurrency": 2,
+      "repetition": 1,
+      "driver_idle_pss_mib": 17.587890625,
+      "peak_tree_pss_mib": 557.791015625,
+      "peak_tree_rss_mib": 823.75390625,
+      "peak_tree_private_mib": 493.9453125,
+      "peak_processes": 9,
+      "samples": 72,
+      "sampler_cpu_seconds": 1.0202225509999998,
+      "remaining_processes": 0,
+      "cpu_seconds": 7.932233,
+      "cpu_user_seconds": 6.980479,
+      "cpu_system_seconds": 0.951753,
+      "wall_seconds": 3.550729174981825,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 3.5438857310218737,
+          "token_length": 624,
+          "attempts": 1
+        },
+        {
+          "index": 1,
+          "success": true,
+          "elapsed": 3.350281110033393,
+          "token_length": 624,
+          "attempts": 1
+        }
+      ],
+      "successes": 2,
+      "cpu_seconds_per_call": 3.9661165,
+      "average_cpu_cores": 2.2339729698029145
+    },
+    {
+      "variant": "fonts_base64",
+      "concurrency": 2,
+      "repetition": 1,
+      "driver_idle_pss_mib": 17.60546875,
+      "peak_tree_pss_mib": 577.0869140625,
+      "peak_tree_rss_mib": 854.59375,
+      "peak_tree_private_mib": 514.12890625,
+      "peak_processes": 11,
+      "samples": 77,
+      "sampler_cpu_seconds": 1.1586087349999996,
+      "remaining_processes": 0,
+      "cpu_seconds": 8.868183,
+      "cpu_user_seconds": 7.962412,
+      "cpu_system_seconds": 0.90577,
+      "wall_seconds": 3.8453766430029646,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 3.7382914141053334,
+          "token_length": 645,
+          "attempts": 1
+        },
+        {
+          "index": 1,
+          "success": true,
+          "elapsed": 3.8378802629886195,
+          "token_length": 645,
+          "attempts": 1
+        }
+      ],
+      "successes": 2,
+      "cpu_seconds_per_call": 4.4340915,
+      "average_cpu_cores": 2.306193599042247
+    },
+    {
+      "variant": "restored_all",
+      "concurrency": 4,
+      "repetition": 1,
+      "driver_idle_pss_mib": 17.5693359375,
+      "peak_tree_pss_mib": 1025.6962890625,
+      "peak_tree_rss_mib": 1608.015625,
+      "peak_tree_private_mib": 957.63671875,
+      "peak_processes": 17,
+      "samples": 116,
+      "sampler_cpu_seconds": 2.7382434169999996,
+      "remaining_processes": 0,
+      "cpu_seconds": 15.713368,
+      "cpu_user_seconds": 13.767985,
+      "cpu_system_seconds": 1.945382,
+      "wall_seconds": 6.109489570022561,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 6.1025770750129595,
+          "token_length": 624,
+          "attempts": 1
+        },
+        {
+          "index": 1,
+          "success": true,
+          "elapsed": 4.389480014913715,
+          "token_length": 624,
+          "attempts": 1
+        },
+        {
+          "index": 2,
+          "success": true,
+          "elapsed": 4.337018364924006,
+          "token_length": 624,
+          "attempts": 1
+        },
+        {
+          "index": 3,
+          "success": true,
+          "elapsed": 4.022584900027141,
+          "token_length": 624,
+          "attempts": 1
+        }
+      ],
+      "successes": 4,
+      "cpu_seconds_per_call": 3.928342,
+      "average_cpu_cores": 2.57196085203268
+    },
+    {
+      "variant": "baseline_035",
+      "concurrency": 4,
+      "repetition": 1,
+      "driver_idle_pss_mib": 17.5634765625,
+      "peak_tree_pss_mib": 1404.771484375,
+      "peak_tree_rss_mib": 2462.43359375,
+      "peak_tree_private_mib": 1307.03515625,
+      "peak_processes": 16,
+      "samples": 124,
+      "sampler_cpu_seconds": 4.012397651000002,
+      "remaining_processes": 0,
+      "cpu_seconds": 21.596205,
+      "cpu_user_seconds": 19.086879,
+      "cpu_system_seconds": 2.509325,
+      "wall_seconds": 6.703448879998177,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 6.694712714059278,
+          "token_length": 645,
+          "attempts": 1
+        },
+        {
+          "index": 1,
+          "success": true,
+          "elapsed": 5.30287773499731,
+          "token_length": 624,
+          "attempts": 1
+        },
+        {
+          "index": 2,
+          "success": true,
+          "elapsed": 5.9751994089456275,
+          "token_length": 624,
+          "attempts": 1
+        },
+        {
+          "index": 3,
+          "success": true,
+          "elapsed": 5.962512028985657,
+          "token_length": 645,
+          "attempts": 1
+        }
+      ],
+      "successes": 4,
+      "cpu_seconds_per_call": 5.39905125,
+      "average_cpu_cores": 3.2216558053331306
+    },
+    {
+      "variant": "fonts_base64",
+      "concurrency": 4,
+      "repetition": 1,
+      "driver_idle_pss_mib": 17.5732421875,
+      "peak_tree_pss_mib": 1028.6396484375,
+      "peak_tree_rss_mib": 1636.62109375,
+      "peak_tree_private_mib": 961.55859375,
+      "peak_processes": 17,
+      "samples": 94,
+      "sampler_cpu_seconds": 2.350067535000001,
+      "remaining_processes": 0,
+      "cpu_seconds": 17.238422,
+      "cpu_user_seconds": 15.366933,
+      "cpu_system_seconds": 1.871489,
+      "wall_seconds": 5.058271312969737,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 4.526345163001679,
+          "token_length": 624,
+          "attempts": 1
+        },
+        {
+          "index": 1,
+          "success": true,
+          "elapsed": 4.81779227592051,
+          "token_length": 645,
+          "attempts": 1
+        },
+        {
+          "index": 2,
+          "success": true,
+          "elapsed": 5.0474382899701595,
+          "token_length": 624,
+          "attempts": 1
+        },
+        {
+          "index": 3,
+          "success": true,
+          "elapsed": 4.599046049988829,
+          "token_length": 624,
+          "attempts": 1
+        }
+      ],
+      "successes": 4,
+      "cpu_seconds_per_call": 4.3096055,
+      "average_cpu_cores": 3.4079670570061285
+    },
+    {
+      "variant": "restored_all",
+      "concurrency": 1,
+      "repetition": 2,
+      "driver_idle_pss_mib": 17.541015625,
+      "peak_tree_pss_mib": 333.8935546875,
+      "peak_tree_rss_mib": 448.84375,
+      "peak_tree_private_mib": 308.80078125,
+      "peak_processes": 6,
+      "samples": 74,
+      "sampler_cpu_seconds": 0.7506947219999986,
+      "remaining_processes": 0,
+      "cpu_seconds": 4.394804,
+      "cpu_user_seconds": 3.886378,
+      "cpu_system_seconds": 0.508425,
+      "wall_seconds": 3.6472213770030066,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 3.641681479057297,
+          "token_length": 624,
+          "attempts": 1
+        }
+      ],
+      "successes": 1,
+      "cpu_seconds_per_call": 4.394804,
+      "average_cpu_cores": 1.2049731962284385
+    },
+    {
+      "variant": "fonts_base64",
+      "concurrency": 1,
+      "repetition": 2,
+      "driver_idle_pss_mib": 17.57421875,
+      "peak_tree_pss_mib": 304.73046875,
+      "peak_tree_rss_mib": 423.6875,
+      "peak_tree_private_mib": 274.7109375,
+      "peak_processes": 6,
+      "samples": 77,
+      "sampler_cpu_seconds": 0.7726968439999986,
+      "remaining_processes": 0,
+      "cpu_seconds": 4.65568,
+      "cpu_user_seconds": 4.197069,
+      "cpu_system_seconds": 0.458611,
+      "wall_seconds": 3.8106761219678447,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 3.8054792180191725,
+          "token_length": 624,
+          "attempts": 1
+        }
+      ],
+      "successes": 1,
+      "cpu_seconds_per_call": 4.65568,
+      "average_cpu_cores": 1.221746443671994
+    },
+    {
+      "variant": "baseline_035",
+      "concurrency": 1,
+      "repetition": 2,
+      "driver_idle_pss_mib": 17.546875,
+      "peak_tree_pss_mib": 499.1337890625,
+      "peak_tree_rss_mib": 736.91015625,
+      "peak_tree_private_mib": 447.97265625,
+      "peak_processes": 6,
+      "samples": 99,
+      "sampler_cpu_seconds": 1.2262166910000012,
+      "remaining_processes": 0,
+      "cpu_seconds": 5.530174,
+      "cpu_user_seconds": 4.865473,
+      "cpu_system_seconds": 0.664701,
+      "wall_seconds": 4.919286199030466,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 4.91538274299819,
+          "token_length": 624,
+          "attempts": 1
+        }
+      ],
+      "successes": 1,
+      "cpu_seconds_per_call": 5.530174,
+      "average_cpu_cores": 1.1241822037290556
+    },
+    {
+      "variant": "fonts_base64",
+      "concurrency": 2,
+      "repetition": 2,
+      "driver_idle_pss_mib": 17.5888671875,
+      "peak_tree_pss_mib": 557.0,
+      "peak_tree_rss_mib": 827.87109375,
+      "peak_tree_private_mib": 494.10546875,
+      "peak_processes": 9,
+      "samples": 279,
+      "sampler_cpu_seconds": 3.7426241589999982,
+      "remaining_processes": 0,
+      "cpu_seconds": 9.331767,
+      "cpu_user_seconds": 8.292941,
+      "cpu_system_seconds": 1.038826,
+      "wall_seconds": 13.961671483935788,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 13.955119387013838,
+          "token_length": 624,
+          "attempts": 1
+        },
+        {
+          "index": 1,
+          "success": true,
+          "elapsed": 3.930800542002544,
+          "token_length": 624,
+          "attempts": 1
+        }
+      ],
+      "successes": 2,
+      "cpu_seconds_per_call": 4.6658835,
+      "average_cpu_cores": 0.668384656574757
+    },
+    {
+      "variant": "restored_all",
+      "concurrency": 2,
+      "repetition": 2,
+      "driver_idle_pss_mib": 17.5947265625,
+      "peak_tree_pss_mib": 596.41796875,
+      "peak_tree_rss_mib": 869.1640625,
+      "peak_tree_private_mib": 532.640625,
+      "peak_processes": 10,
+      "samples": 79,
+      "sampler_cpu_seconds": 1.2589955160000024,
+      "remaining_processes": 0,
+      "cpu_seconds": 8.60522,
+      "cpu_user_seconds": 7.748427,
+      "cpu_system_seconds": 0.856793,
+      "wall_seconds": 3.9062853389186785,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 3.6782438380178064,
+          "token_length": 624,
+          "attempts": 1
+        },
+        {
+          "index": 1,
+          "success": true,
+          "elapsed": 3.8993011609418318,
+          "token_length": 645,
+          "attempts": 1
+        }
+      ],
+      "successes": 2,
+      "cpu_seconds_per_call": 4.30261,
+      "average_cpu_cores": 2.2029163907371037
+    },
+    {
+      "variant": "baseline_035",
+      "concurrency": 2,
+      "repetition": 2,
+      "driver_idle_pss_mib": 17.5849609375,
+      "peak_tree_pss_mib": 804.6298828125,
+      "peak_tree_rss_mib": 1323.44921875,
+      "peak_tree_private_mib": 716.078125,
+      "peak_processes": 9,
+      "samples": 92,
+      "sampler_cpu_seconds": 1.8214086320000007,
+      "remaining_processes": 0,
+      "cpu_seconds": 9.821446,
+      "cpu_user_seconds": 8.733207,
+      "cpu_system_seconds": 1.088238,
+      "wall_seconds": 4.592867825995199,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 4.585457007982768,
+          "token_length": 624,
+          "attempts": 1
+        },
+        {
+          "index": 1,
+          "success": true,
+          "elapsed": 4.32902829896193,
+          "token_length": 624,
+          "attempts": 1
+        }
+      ],
+      "successes": 2,
+      "cpu_seconds_per_call": 4.910723,
+      "average_cpu_cores": 2.1384125065414556
+    },
+    {
+      "variant": "fonts_base64",
+      "concurrency": 4,
+      "repetition": 2,
+      "driver_idle_pss_mib": 17.5751953125,
+      "peak_tree_pss_mib": 1035.1259765625,
+      "peak_tree_rss_mib": 1641.703125,
+      "peak_tree_private_mib": 967.43359375,
+      "peak_processes": 18,
+      "samples": 99,
+      "sampler_cpu_seconds": 2.7583121010000013,
+      "remaining_processes": 0,
+      "cpu_seconds": 17.948834,
+      "cpu_user_seconds": 16.041156,
+      "cpu_system_seconds": 1.907678,
+      "wall_seconds": 5.065594205982052,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 4.698806602973491,
+          "token_length": 624,
+          "attempts": 1
+        },
+        {
+          "index": 1,
+          "success": true,
+          "elapsed": 5.057229927973822,
+          "token_length": 645,
+          "attempts": 1
+        },
+        {
+          "index": 2,
+          "success": true,
+          "elapsed": 4.975909685017541,
+          "token_length": 624,
+          "attempts": 1
+        },
+        {
+          "index": 3,
+          "success": true,
+          "elapsed": 4.556462559965439,
+          "token_length": 624,
+          "attempts": 1
+        }
+      ],
+      "successes": 4,
+      "cpu_seconds_per_call": 4.4872085,
+      "average_cpu_cores": 3.5432830325816265
+    },
+    {
+      "variant": "baseline_035",
+      "concurrency": 4,
+      "repetition": 2,
+      "driver_idle_pss_mib": 17.61328125,
+      "peak_tree_pss_mib": 1458.755859375,
+      "peak_tree_rss_mib": 2593.8515625,
+      "peak_tree_private_mib": 1361.61328125,
+      "peak_processes": 17,
+      "samples": 123,
+      "sampler_cpu_seconds": 4.128012943000002,
+      "remaining_processes": 0,
+      "cpu_seconds": 20.496654,
+      "cpu_user_seconds": 18.084249,
+      "cpu_system_seconds": 2.412404,
+      "wall_seconds": 6.620474759023637,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 5.687816941994242,
+          "token_length": 624,
+          "attempts": 1
+        },
+        {
+          "index": 1,
+          "success": true,
+          "elapsed": 6.604862916981801,
+          "token_length": 624,
+          "attempts": 1
+        },
+        {
+          "index": 2,
+          "success": true,
+          "elapsed": 5.296497578034177,
+          "token_length": 624,
+          "attempts": 1
+        },
+        {
+          "index": 3,
+          "success": true,
+          "elapsed": 5.916822963976301,
+          "token_length": 624,
+          "attempts": 1
+        }
+      ],
+      "successes": 4,
+      "cpu_seconds_per_call": 5.1241635,
+      "average_cpu_cores": 3.095949270414977
+    },
+    {
+      "variant": "restored_all",
+      "concurrency": 4,
+      "repetition": 2,
+      "driver_idle_pss_mib": 17.580078125,
+      "peak_tree_pss_mib": 1064.3037109375,
+      "peak_tree_rss_mib": 1653.47265625,
+      "peak_tree_private_mib": 998.05859375,
+      "peak_processes": 18,
+      "samples": 99,
+      "sampler_cpu_seconds": 2.512858715,
+      "remaining_processes": 0,
+      "cpu_seconds": 16.092969,
+      "cpu_user_seconds": 14.232032,
+      "cpu_system_seconds": 1.860937,
+      "wall_seconds": 5.124774213996716,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 4.391326066921465,
+          "token_length": 645,
+          "attempts": 1
+        },
+        {
+          "index": 1,
+          "success": true,
+          "elapsed": 4.192757380078547,
+          "token_length": 624,
+          "attempts": 1
+        },
+        {
+          "index": 2,
+          "success": true,
+          "elapsed": 5.116061670007184,
+          "token_length": 624,
+          "attempts": 1
+        },
+        {
+          "index": 3,
+          "success": true,
+          "elapsed": 4.479881549021229,
+          "token_length": 624,
+          "attempts": 1
+        }
+      ],
+      "successes": 4,
+      "cpu_seconds_per_call": 4.02324225,
+      "average_cpu_cores": 3.140229857551011
+    },
+    {
+      "variant": "baseline_035",
+      "concurrency": 1,
+      "repetition": 3,
+      "driver_idle_pss_mib": 17.5595703125,
+      "peak_tree_pss_mib": 463.13671875,
+      "peak_tree_rss_mib": 694.765625,
+      "peak_tree_private_mib": 420.80859375,
+      "peak_processes": 6,
+      "samples": 93,
+      "sampler_cpu_seconds": 1.090554435999998,
+      "remaining_processes": 0,
+      "cpu_seconds": 4.957174,
+      "cpu_user_seconds": 4.382528,
+      "cpu_system_seconds": 0.574646,
+      "wall_seconds": 4.60949912504293,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 4.605500211007893,
+          "token_length": 624,
+          "attempts": 1
+        }
+      ],
+      "successes": 1,
+      "cpu_seconds_per_call": 4.957174,
+      "average_cpu_cores": 1.0754257383558636
+    },
+    {
+      "variant": "fonts_base64",
+      "concurrency": 1,
+      "repetition": 3,
+      "driver_idle_pss_mib": 17.611328125,
+      "peak_tree_pss_mib": 357.7509765625,
+      "peak_tree_rss_mib": 477.6953125,
+      "peak_tree_private_mib": 332.859375,
+      "peak_processes": 6,
+      "samples": 75,
+      "sampler_cpu_seconds": 0.7524059919999999,
+      "remaining_processes": 0,
+      "cpu_seconds": 4.240632,
+      "cpu_user_seconds": 3.776682,
+      "cpu_system_seconds": 0.46395,
+      "wall_seconds": 3.724031456047669,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 3.7201895070029423,
+          "token_length": 624,
+          "attempts": 1
+        }
+      ],
+      "successes": 1,
+      "cpu_seconds_per_call": 4.240632,
+      "average_cpu_cores": 1.138720778825161
+    },
+    {
+      "variant": "restored_all",
+      "concurrency": 1,
+      "repetition": 3,
+      "driver_idle_pss_mib": 17.541015625,
+      "peak_tree_pss_mib": 392.984375,
+      "peak_tree_rss_mib": 642.47265625,
+      "peak_tree_private_mib": 339.19140625,
+      "peak_processes": 9,
+      "samples": 85,
+      "sampler_cpu_seconds": 0.8322505670000027,
+      "remaining_processes": 0,
+      "cpu_seconds": 4.795677,
+      "cpu_user_seconds": 4.225551,
+      "cpu_system_seconds": 0.570126,
+      "wall_seconds": 4.209512032917701,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 4.20569825603161,
+          "token_length": 645,
+          "attempts": 1
+        }
+      ],
+      "successes": 1,
+      "cpu_seconds_per_call": 4.795677,
+      "average_cpu_cores": 1.1392477233699738
+    },
+    {
+      "variant": "baseline_035",
+      "concurrency": 2,
+      "repetition": 3,
+      "driver_idle_pss_mib": 17.6201171875,
+      "peak_tree_pss_mib": 870.15234375,
+      "peak_tree_rss_mib": 1371.69921875,
+      "peak_tree_private_mib": 776.81640625,
+      "peak_processes": 10,
+      "samples": 91,
+      "sampler_cpu_seconds": 1.688624831999995,
+      "remaining_processes": 0,
+      "cpu_seconds": 10.117737,
+      "cpu_user_seconds": 9.010509,
+      "cpu_system_seconds": 1.107227,
+      "wall_seconds": 4.546924442052841,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 4.526930809020996,
+          "token_length": 645,
+          "attempts": 1
+        },
+        {
+          "index": 1,
+          "success": true,
+          "elapsed": 4.540558664011769,
+          "token_length": 645,
+          "attempts": 1
+        }
+      ],
+      "successes": 2,
+      "cpu_seconds_per_call": 5.0588685,
+      "average_cpu_cores": 2.2251825665772564
+    },
+    {
+      "variant": "restored_all",
+      "concurrency": 2,
+      "repetition": 3,
+      "driver_idle_pss_mib": 17.5283203125,
+      "peak_tree_pss_mib": 573.4658203125,
+      "peak_tree_rss_mib": 852.015625,
+      "peak_tree_private_mib": 510.13671875,
+      "peak_processes": 10,
+      "samples": 107,
+      "sampler_cpu_seconds": 1.577470876999996,
+      "remaining_processes": 0,
+      "cpu_seconds": 8.324289,
+      "cpu_user_seconds": 7.355056,
+      "cpu_system_seconds": 0.969233,
+      "wall_seconds": 5.316301358980127,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 3.6032525750342757,
+          "token_length": 624,
+          "attempts": 1
+        },
+        {
+          "index": 1,
+          "success": true,
+          "elapsed": 5.309073965065181,
+          "token_length": 624,
+          "attempts": 1
+        }
+      ],
+      "successes": 2,
+      "cpu_seconds_per_call": 4.1621445,
+      "average_cpu_cores": 1.5658045768866877
+    },
+    {
+      "variant": "fonts_base64",
+      "concurrency": 2,
+      "repetition": 3,
+      "driver_idle_pss_mib": 17.6025390625,
+      "peak_tree_pss_mib": 550.978515625,
+      "peak_tree_rss_mib": 814.39453125,
+      "peak_tree_private_mib": 488.01171875,
+      "peak_processes": 9,
+      "samples": 80,
+      "sampler_cpu_seconds": 1.2315912450000042,
+      "remaining_processes": 0,
+      "cpu_seconds": 8.823457,
+      "cpu_user_seconds": 7.886761,
+      "cpu_system_seconds": 0.936696,
+      "wall_seconds": 3.953165635932237,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 3.8675363559741527,
+          "token_length": 624,
+          "attempts": 1
+        },
+        {
+          "index": 1,
+          "success": true,
+          "elapsed": 3.9453674689866602,
+          "token_length": 624,
+          "attempts": 1
+        }
+      ],
+      "successes": 2,
+      "cpu_seconds_per_call": 4.4117285,
+      "average_cpu_cores": 2.2319977993836955
+    },
+    {
+      "variant": "restored_all",
+      "concurrency": 4,
+      "repetition": 3,
+      "driver_idle_pss_mib": 17.5537109375,
+      "peak_tree_pss_mib": 1035.3017578125,
+      "peak_tree_rss_mib": 1609.4609375,
+      "peak_tree_private_mib": 968.85546875,
+      "peak_processes": 18,
+      "samples": 122,
+      "sampler_cpu_seconds": 3.047747495000003,
+      "remaining_processes": 0,
+      "cpu_seconds": 17.51968,
+      "cpu_user_seconds": 15.32488,
+      "cpu_system_seconds": 2.194799,
+      "wall_seconds": 6.315710713039152,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 5.9161750780185685,
+          "token_length": 645,
+          "attempts": 1
+        },
+        {
+          "index": 1,
+          "success": true,
+          "elapsed": 4.140113541972823,
+          "token_length": 624,
+          "attempts": 1
+        },
+        {
+          "index": 2,
+          "success": true,
+          "elapsed": 6.301316316006705,
+          "token_length": 645,
+          "attempts": 1
+        },
+        {
+          "index": 3,
+          "success": true,
+          "elapsed": 4.011746210977435,
+          "token_length": 624,
+          "attempts": 1
+        }
+      ],
+      "successes": 4,
+      "cpu_seconds_per_call": 4.37992,
+      "average_cpu_cores": 2.7739839261208723
+    },
+    {
+      "variant": "baseline_035",
+      "concurrency": 4,
+      "repetition": 3,
+      "driver_idle_pss_mib": 17.6416015625,
+      "peak_tree_pss_mib": 1447.201171875,
+      "peak_tree_rss_mib": 2476.46484375,
+      "peak_tree_private_mib": 1349.17578125,
+      "peak_processes": 17,
+      "samples": 108,
+      "sampler_cpu_seconds": 3.413645283000001,
+      "remaining_processes": 0,
+      "cpu_seconds": 19.403302,
+      "cpu_user_seconds": 17.037406,
+      "cpu_system_seconds": 2.365895,
+      "wall_seconds": 5.875144700985402,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 5.214695750968531,
+          "token_length": 645,
+          "attempts": 1
+        },
+        {
+          "index": 1,
+          "success": true,
+          "elapsed": 4.981887634960003,
+          "token_length": 645,
+          "attempts": 1
+        },
+        {
+          "index": 2,
+          "success": true,
+          "elapsed": 5.511079628020525,
+          "token_length": 624,
+          "attempts": 1
+        },
+        {
+          "index": 3,
+          "success": true,
+          "elapsed": 5.866254474967718,
+          "token_length": 624,
+          "attempts": 1
+        }
+      ],
+      "successes": 4,
+      "cpu_seconds_per_call": 4.8508255,
+      "average_cpu_cores": 3.3026083590325195
+    },
+    {
+      "variant": "fonts_base64",
+      "concurrency": 4,
+      "repetition": 3,
+      "driver_idle_pss_mib": 17.6025390625,
+      "peak_tree_pss_mib": 1025.3642578125,
+      "peak_tree_rss_mib": 1626.9765625,
+      "peak_tree_private_mib": 957.296875,
+      "peak_processes": 17,
+      "samples": 133,
+      "sampler_cpu_seconds": 3.1731493070000028,
+      "remaining_processes": 0,
+      "cpu_seconds": 19.88639,
+      "cpu_user_seconds": 17.733365,
+      "cpu_system_seconds": 2.153025,
+      "wall_seconds": 7.119978950941004,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 5.629174528992735,
+          "token_length": 645,
+          "attempts": 1
+        },
+        {
+          "index": 1,
+          "success": true,
+          "elapsed": 4.874841055949219,
+          "token_length": 624,
+          "attempts": 1
+        },
+        {
+          "index": 2,
+          "success": true,
+          "elapsed": 7.112147302017547,
+          "token_length": 645,
+          "attempts": 1
+        },
+        {
+          "index": 3,
+          "success": true,
+          "elapsed": 4.796044749906287,
+          "token_length": 624,
+          "attempts": 1
+        }
+      ],
+      "successes": 4,
+      "cpu_seconds_per_call": 4.9715975,
+      "average_cpu_cores": 2.7930405605162267
+    }
+  ],
+  "summary": [
+    {
+      "variant": "baseline_035",
+      "concurrency": 1,
+      "successes": 3,
+      "calls": 3,
+      "median_token_seconds": 4.605500211007893,
+      "median_batch_seconds": 4.60949912504293,
+      "cpu_seconds_per_success": 5.129388333333334,
+      "median_peak_pss_mib": 476.671875,
+      "median_peak_rss_mib": 698.37109375,
+      "remaining_processes": 0
+    },
+    {
+      "variant": "fonts_base64",
+      "concurrency": 1,
+      "successes": 3,
+      "calls": 3,
+      "median_token_seconds": 3.8054792180191725,
+      "median_batch_seconds": 3.8106761219678447,
+      "cpu_seconds_per_success": 4.525796,
+      "median_peak_pss_mib": 332.3046875,
+      "median_peak_rss_mib": 477.6953125,
+      "remaining_processes": 0
+    },
+    {
+      "variant": "restored_all",
+      "concurrency": 1,
+      "successes": 3,
+      "calls": 3,
+      "median_token_seconds": 3.641681479057297,
+      "median_batch_seconds": 3.6472213770030066,
+      "cpu_seconds_per_success": 4.400863999999999,
+      "median_peak_pss_mib": 375.1806640625,
+      "median_peak_rss_mib": 515.96875,
+      "remaining_processes": 0
+    },
+    {
+      "variant": "baseline_035",
+      "concurrency": 2,
+      "successes": 6,
+      "calls": 6,
+      "median_token_seconds": 4.563007835997269,
+      "median_batch_seconds": 4.592867825995199,
+      "cpu_seconds_per_success": 5.0674035,
+      "median_peak_pss_mib": 804.6298828125,
+      "median_peak_rss_mib": 1323.44921875,
+      "remaining_processes": 0
+    },
+    {
+      "variant": "fonts_base64",
+      "concurrency": 2,
+      "successes": 6,
+      "calls": 6,
+      "median_token_seconds": 3.8991684489883482,
+      "median_batch_seconds": 3.953165635932237,
+      "cpu_seconds_per_success": 4.503901166666666,
+      "median_peak_pss_mib": 557.0,
+      "median_peak_rss_mib": 827.87109375,
+      "remaining_processes": 0
+    },
+    {
+      "variant": "restored_all",
+      "concurrency": 2,
+      "successes": 6,
+      "calls": 6,
+      "median_token_seconds": 3.640748206526041,
+      "median_batch_seconds": 3.9062853389186785,
+      "cpu_seconds_per_success": 4.143623666666667,
+      "median_peak_pss_mib": 573.4658203125,
+      "median_peak_rss_mib": 852.015625,
+      "remaining_processes": 0
+    },
+    {
+      "variant": "baseline_035",
+      "concurrency": 4,
+      "successes": 12,
+      "calls": 12,
+      "median_token_seconds": 5.77703570848098,
+      "median_batch_seconds": 6.620474759023637,
+      "cpu_seconds_per_success": 5.124680083333334,
+      "median_peak_pss_mib": 1447.201171875,
+      "median_peak_rss_mib": 2476.46484375,
+      "remaining_processes": 0
+    },
+    {
+      "variant": "fonts_base64",
+      "concurrency": 4,
+      "successes": 12,
+      "calls": 12,
+      "median_token_seconds": 4.846316665934864,
+      "median_batch_seconds": 5.065594205982052,
+      "cpu_seconds_per_success": 4.5894705,
+      "median_peak_pss_mib": 1028.6396484375,
+      "median_peak_rss_mib": 1636.62109375,
+      "remaining_processes": 0
+    },
+    {
+      "variant": "restored_all",
+      "concurrency": 4,
+      "successes": 12,
+      "calls": 12,
+      "median_token_seconds": 4.39040304091759,
+      "median_batch_seconds": 6.109489570022561,
+      "cpu_seconds_per_success": 4.110501416666667,
+      "median_peak_pss_mib": 1035.3017578125,
+      "median_peak_rss_mib": 1609.4609375,
+      "remaining_processes": 0
+    }
+  ],
+  "finished_at": "2026-11-07T12:40:42.070154+00:00",
+  "validation": {
+    "native_tests": 35,
+    "smoke": "passed",
+    "application_tests": 54,
+    "rendering": {
+      "identical_cases": 360,
+      "fields": "12 TextMetrics fields, RGBA hash, PNG SHA256 excluding randomized deBG"
+    },
+    "backend_control": [
+      {
+        "mode": "python_sdk",
+        "token_elapsed": 3.228,
+        "attempts": 1,
+        "token_length": 645,
+        "dummy_token": false,
+        "backend": {
+          "accepted": true,
+          "http_status": 200,
+          "hostname": "capskip.com",
+          "verified": true,
+          "server": true,
+          "success": "true"
+        },
+        "passed": true
+      }
+    ],
+    "original_page": {
+      "status": "verified",
+      "elapsed": 11.772,
+      "token_length": 624,
+      "verification_requests": 1,
+      "script_errors": 0,
+      "backend": {
+        "Success": "true",
+        "Hostname": "capskip.com"
+      }
+    },
+    "bundled_backend_control": [
+      {
+        "mode": "python_sdk",
+        "token_elapsed": 5.225,
+        "attempts": 1,
+        "token_length": 624,
+        "dummy_token": false,
+        "backend": {
+          "accepted": true,
+          "http_status": 200,
+          "hostname": "capskip.com",
+          "verified": true,
+          "server": true,
+          "success": "true"
+        },
+        "passed": true
+      }
+    ],
+    "bundled_application_tests": 54,
+    "wheel_artifacts": [
+      {
+        "name": "ruyi_captcha-0.1.0-py3-none-any.whl",
+        "size_bytes": 43070,
+        "sha256": "026b7e306ff86717954d0d3af63b151220bb938c35c3d461dbb12702f09b4d60"
+      },
+      {
+        "name": "ruyi_captcha-0.1.0-py3-none-manylinux_2_43_x86_64.whl",
+        "size_bytes": 57661798,
+        "sha256": "fa547a80cef93253ff72637f52a05bad139beaf3a23f1ad4194bf8d67ed6aa88"
+      }
+    ]
+  },
+  "release_pin": "9991779d024fb4c29c1f1f6f5f33e2129aa3b628"
+}
