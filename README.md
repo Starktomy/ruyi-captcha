@@ -82,6 +82,35 @@ print(details.elapsed, details.attempts)
   '0x4AAAAAADogn3t3_JKwKkgS' --timeout 30 --attempts 1
 ```
 
+## 多环境生成器
+
+旧 fork 的 `b014478` 生成器已迁入本仓库，保持内核只负责应用 profile。
+支持 Linux / Windows Firefox 159，固定 seed 可复现，默认语言 `en-US`、时区
+`America/New_York`；可显式指定语言、时区、屏幕、DPR 和浏览器报告的逻辑 CPU 数。
+
+```python
+from ruyi_captcha import generate_profile, solve_turnstile
+
+profile = generate_profile("linux", seed=42, locale="en-US",
+                           timezone="America/New_York", hardware_concurrency=8)
+token = solve_turnstile(site_url="https://your-site.example/", sitekey="your-sitekey",
+                        profile=profile)
+```
+
+```sh
+ruyi-captcha profile --os linux --seed 42 --output profile.json
+ruyi-captcha profile --os windows --seed 100 --count 10 --output-dir profiles
+ruyi-captcha solve 'https://your-site.example/' 'your-sitekey' --profile-file profile.json
+# 等价的生成入口，无需安装原生内核：
+python -m ruyi_captcha.profiles --os linux --seed 42
+```
+
+HTTP 调用把生成的 JSON 对象放进现有请求的 `profile` 字段即可。
+`hardware_concurrency` 只改变浏览器属性；服务并发使用 `--concurrency` 控制。
+生成器不会安装另一个操作系统、字体或 GPU，跨宿主配置不保证对应的渲染结果。
+实现范围、内核继承修复与旧性能补丁清单见
+[fork 审计与迁移建议](docs/fork-performance-and-profiles.zh-CN.md)。
+
 ## 模式二：HTTP API
 
 本机调用：

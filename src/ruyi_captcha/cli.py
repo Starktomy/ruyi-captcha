@@ -1,19 +1,27 @@
 import argparse
 from dataclasses import asdict, replace
 import json
+from pathlib import Path
 import sys
 
 
 def main(argv=None):
+    argv = list(sys.argv[1:] if argv is None else argv)
+    if argv and argv[0] == "profile":
+        from .profiles.generator import main as generate
+        return generate(argv[1:])
     parser = argparse.ArgumentParser(prog="ruyi-captcha")
     commands = parser.add_subparsers(dest="command", required=True)
+    commands.add_parser("profile", help="Generate Firefox profiles; use profile --help for options")
     solve = commands.add_parser("solve", help="Solve Turnstile with site_url + sitekey")
     solve.add_argument("site_url")
     solve.add_argument("sitekey")
     solve.add_argument("--timeout", type=float, default=60)
     solve.add_argument("--attempts", type=int, default=3)
     solve.add_argument("--proxy")
-    solve.add_argument("--profile", choices=("linux", "default"), default="linux")
+    profile = solve.add_mutually_exclusive_group()
+    profile.add_argument("--profile", choices=("linux", "default"), default="linux")
+    profile.add_argument("--profile-file", type=Path, help="Use an exported Firefox profile JSON object")
     solve.add_argument("--action")
     solve.add_argument("--cdata")
     solve.add_argument("--json", action="store_true")
@@ -44,8 +52,13 @@ def main(argv=None):
             print(json.dumps(check_runtime().to_dict(), indent=2))
         else:
             from .sdk import solve_turnstile_details
+            profile = args.profile
+            if args.profile_file:
+                profile = json.loads(args.profile_file.read_text(encoding="utf-8"))
+                if not isinstance(profile, dict):
+                    raise ValueError("profile file must contain a JSON object")
             result = solve_turnstile_details(args.site_url, args.sitekey, timeout=args.timeout,
-                attempts=args.attempts, proxy=args.proxy, profile=args.profile, action=args.action, cdata=args.cdata)
+                attempts=args.attempts, proxy=args.proxy, profile=profile, action=args.action, cdata=args.cdata)
             print(json.dumps(asdict(result)) if args.json else result.token)
         return 0
     except Exception as error:
