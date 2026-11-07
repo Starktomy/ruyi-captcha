@@ -1,9 +1,14 @@
 """The diagnostic scanner must not trip page-installed DOM access monitors."""
 import importlib.util
+import io
 import json
 from pathlib import Path
 import sys
+import tempfile
 import unittest
+from contextlib import redirect_stdout
+from types import SimpleNamespace
+from unittest.mock import patch
 
 from ruyi_captcha.errors import RuntimeUnavailable
 from ruyi_captcha.runtime import load_bindings
@@ -31,6 +36,47 @@ class PerimeterXUrlTests(unittest.TestCase):
 
 @unittest.skipUnless(SHELL.is_file(), "compatible native runtime is not installed")
 class PerimeterXProbeTests(unittest.TestCase):
+    def test_hold_sequence_delivers_firefox_flags_to_the_frame(self):
+        captured=[]
+        class OfflineContext(bindings.Context):
+            def navigate(self,url):
+                self.put_resource('https://probe.test/child', '''<!doctype html>
+                    <div role="button" aria-label="Press & Hold Human Challenge"
+                        style="width:200px;height:80px">Press &amp; Hold</div><p role="alert"></p>
+                    <script>
+                    globalThis.events=[];
+                    const b=document.querySelector('div');
+                    for(const type of ['pointerover','pointerenter','mouseover','mouseenter',
+                        'pointermove','mousemove','pointerdown','mousedown','pointerup','mouseup','click'])
+                        b.addEventListener(type,e=>events.push([e.type,e.detail,e.bubbles,
+                            e.cancelable,e.isTrusted,e.view===window]));
+                    b.addEventListener('pointerdown',()=>setTimeout(()=>
+                        b.setAttribute('aria-label','Human Challenge completed, please wait'),80));
+                    b.addEventListener('mouseup',()=>document.querySelector('p').textContent='Please try again');
+                    </script>''')
+                self.load_page(url,'<!doctype html><iframe src="https://probe.test/child"></iframe>')
+            def close(self):
+                if not self.closed:
+                    try:captured.extend(self.eval("document.querySelector('iframe').contentWindow.events"))
+                    finally:super().close()
+        with tempfile.TemporaryDirectory() as folder:
+            output=Path(folder)/'report.json'
+            argv=['probe','--url','https://probe.test/','--hold','1','--until-complete',
+                  '--timeout','3','--output',str(output)]
+            with patch.object(probe,'load_bindings',return_value=SimpleNamespace(
+                    Context=OfflineContext,JSError=bindings.JSError)),patch.object(sys,'argv',argv),redirect_stdout(io.StringIO()):
+                probe.main()
+            report=json.loads(output.read_text())
+        expected=[['pointerover',0,True,True],['pointerenter',0,False,False],
+                  ['mouseover',0,True,True],['mouseenter',0,False,False],
+                  ['pointermove',0,True,True],['mousemove',0,True,True],
+                  ['pointerdown',0,True,True],['mousedown',1,True,True],
+                  ['pointerup',0,True,True],['mouseup',1,True,True],['click',1,True,True]]
+        self.assertEqual(captured,[row+[True,True] for row in expected])
+        self.assertEqual(report['outcome'],'rejected')
+        self.assertFalse(report['verified'])
+        self.assertEqual([row['event'] for row in report['input']],['down','up'])
+
     def test_closed_frame_scan_avoids_page_hooks_and_redacts_secrets(self):
         with bindings.Context(shell=SHELL) as context:
             context.put_resource("https://probe.test/widget", """<!doctype html>

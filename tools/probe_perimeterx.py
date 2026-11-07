@@ -212,8 +212,10 @@ def main():
                         for event in ('pointerover','pointerenter','mouseover','mouseenter','pointermove','mousemove','pointerdown','mousedown'):
                             fields={**init,**(pointer if event.startswith('pointer') else {})}
                             if event in ('pointerover','pointerenter','pointermove'):fields['button']=-1
-                            if event in ('pointerenter','mouseenter'):fields['bubbles']=False
-                            if event not in ('pointerdown','mousedown'):fields['detail']=0
+                            if event in ('pointerenter','mouseenter'):
+                                fields['bubbles']=False
+                                fields['cancelable']=False
+                            fields['detail']=1 if event=='mousedown' else 0
                             if event in ('pointerdown','mousedown'):fields['buttons']=1
                             if event.startswith('pointer'):fields['pressure']=0.5 if fields['buttons'] else 0
                             context.dispatch_input(event,target=held['path'],**fields)
@@ -225,6 +227,7 @@ def main():
                     for event in ('pointerup','mouseup','click'):
                         fields={**init,**(pointer if event.startswith('pointer') or event=='click' else {})}
                         fields['buttons']=0
+                        fields['detail']=0 if event=='pointerup' else 1
                         if event in ('pointerup','click'):fields['pressure']=0
                         context.dispatch_input(event,target=held['path'],**fields)
                     released=True
