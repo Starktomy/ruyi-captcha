@@ -1,0 +1,11 @@
+ruyi-captcha
+Copyright (c) 2026 Starktomy and contributors
+
+The Turnstile driver and Linux Firefox 159 profile are adapted from
+https://github.com/Starktomy/ff-ruyijs, branch backup/main-full-20261107,
+commit 158eae70e9cc78b263474aca58bc42d10412c990.
+Those sources were distributed under AGPL-3.0-only. This application is
+distributed under AGPL-3.0-only; see LICENSE.
+
+The ff-ruyijs runtime is a separate dependency and retains its own license
+and third-party notices. No Firefox engine binaries are included here.

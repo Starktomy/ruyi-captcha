@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ruyi-captcha"
+version = "0.1.0"
+description = "Captcha solvers as a Python package and HTTP API, powered by ff-ruyijs"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "AGPL-3.0-only"
+license-files = ["LICENSE", "NOTICE"]
+authors = [{name = "Starktomy"}]
+dependencies = []
+
+[project.optional-dependencies]
+api = ["fastapi>=0.115,<1", "pydantic>=2.6,<3", "uvicorn>=0.30,<1"]
+test = ["httpx>=0.27,<1", "build>=1.2,<2"]
+
+[project.scripts]
+ruyi-captcha = "ruyi_captcha.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+ruyi_captcha = ["profiles/*.json", "runtime-lock.json"]
