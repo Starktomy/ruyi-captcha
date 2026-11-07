@@ -2,6 +2,7 @@
 import argparse
 import json
 import math
+import os
 from pathlib import Path
 from time import monotonic
 from urllib.parse import urlsplit, urlunsplit
@@ -9,38 +10,55 @@ from urllib.parse import urlsplit, urlunsplit
 from ruyi_captcha.runtime import load_bindings
 from ruyi_captcha.providers.turnstile import _linux_profile
 
-STATE = r'''(() => {
+INSPECT = r'''(capture => {
  const localName=Object.getOwnPropertyDescriptor(Element.prototype,'localName').get;
  const attribute=Element.prototype.getAttribute;
  const frameDocument=Object.getOwnPropertyDescriptor(HTMLIFrameElement.prototype,'contentDocument').get;
  const shadow=Object.getOwnPropertyDescriptor(Element.prototype,'shadowRoot').get;
+ const nodeType=Object.getOwnPropertyDescriptor(Node.prototype,'nodeType').get;
+ const nodeName=Object.getOwnPropertyDescriptor(Node.prototype,'nodeName').get;
+ const textContent=Object.getOwnPropertyDescriptor(Node.prototype,'textContent').get;
+ const bounds=Element.prototype.getBoundingClientRect;
+ const query=(root,selector)=>Reflect.apply(nodeType.call(root)===9?Document.prototype.querySelectorAll:
+   nodeType.call(root)===11?DocumentFragment.prototype.querySelectorAll:Element.prototype.querySelectorAll,root,[selector]);
+ const queryPath=(path,type)=>'(Reflect.apply('+(type===9?'Document':type===11?'DocumentFragment':'Element')+
+   '.prototype.querySelectorAll,'+path+',["*"]))';
+ const text=e=>textContent.call(e)||'';
  const name=e=>localName.call(e),attr=(e,k)=>attribute.call(e,k);
  const scopes=[{node:document,path:'document',depth:0,visible:true}],documents=[],buttons=[];
+ if(capture)globalThis.__ruyiPxCandidates={};
  for(let index=0;index<scopes.length && scopes.length<80;index++){
    const scope=scopes[index],root=scope.node;
-   if(root.nodeType===9){
+   const type=nodeType.call(root);
+   if(type===9){
      const win=root.defaultView;
      documents.push({url:root.URL,title:root.title,ready:root.readyState,
-       text:[...root.querySelectorAll('h1,h2,p,label,button')].map(e=>e.textContent.trim()).join('\n').slice(0,1800),
+       text:[...query(root,'h1,h2,p,label,button')].map(e=>text(e).trim()).join('\n').slice(0,1800),
        cookies:(root.cookie||'').split(';').map(s=>s.trim().split('=')[0]).filter(Boolean),
        scripts:[...root.scripts].map(s=>s.src).filter(Boolean).slice(0,20),
-       appId:win?._pxAppId,pxCaptcha:!!root.querySelector('#px-captcha')});
+       appId:win?._pxAppId,pxCaptcha:!!query(root,'#px-captcha').length});
    }
-   const nodes=[...root.querySelectorAll('*')];
+   const nodes=[...query(root,'*')];
    for(let i=0;i<nodes.length;i++){
-     const node=nodes[i],path=scope.path+'.querySelectorAll("*")['+i+']';
-     const label=(node.textContent||'').trim();
+     const node=nodes[i],path=queryPath(scope.path,type)+'['+i+']';
+     const label=text(node).trim();
      if(name(node)==='button' || attr(node,'role')==='button' ||
-        name(node)==='input' && ['button','checkbox'].includes(node.type)){
-       const rect=node.getBoundingClientRect();
-       buttons.push({path,tag:node.localName,id:node.id,role:node.getAttribute('role'),
-         label:label.slice(0,300),aria:node.getAttribute('aria-label'),visible:scope.visible,rect:rect.toJSON()});
+        name(node)==='input' && ['button','checkbox'].includes(attr(node,'type'))){
+       const rect=bounds.call(node);
+       if(capture && scope.visible){
+         const aria=attr(node,'aria-label')||'';
+         if(aria.includes('Press & Hold'))globalThis.__ruyiPxCandidates.hold=node;
+         if(aria==='Accessible challenge')globalThis.__ruyiPxCandidates.accessible=node;
+         if(aria==='Press again')globalThis.__ruyiPxCandidates.confirm=node;
+       }
+       buttons.push({path,tag:name(node),id:attr(node,'id'),role:attr(node,'role'),
+         label:label.slice(0,300),aria:attr(node,'aria-label'),visible:scope.visible,rect:rect.toJSON()});
      }
      const inner=shadow.call(node);
      if(inner && scope.depth<5)scopes.push({node:inner,
        path:'Object.getOwnPropertyDescriptor(Element.prototype,"shadowRoot").get.call('+path+')',
        depth:scope.depth+1,visible:scope.visible});
-     if(name(node)==='iframe' && scope.depth<5){
+     if(name(node)==='iframe' && scope.depth<5 && !/display\s*:\s*none/.test(attr(node,'style')||'')){
        try{const doc=frameDocument.call(node);if(doc)scopes.push({node:doc,
          path:'Object.getOwnPropertyDescriptor(HTMLIFrameElement.prototype,"contentDocument").get.call('+path+')',
          depth:scope.depth+1,visible:scope.visible&&!/display\s*:\s*none/.test(attr(node,'style')||'')})}catch(e){}
@@ -48,16 +66,23 @@ STATE = r'''(() => {
    }
  }
  return {documents,buttons,scopes:scopes.length,
-   roots:scopes.map(s=>({path:s.path,type:s.node.nodeType,
-     markup:s.node.nodeType===11?(s.node.innerHTML||'').replace(/<style\b[\s\S]*?<\/style>/gi,'[style]')
+   roots:scopes.map(s=>({path:s.path,type:nodeType.call(s.node),
+     markup:nodeType.call(s.node)===11?(Object.getOwnPropertyDescriptor(ShadowRoot.prototype,'innerHTML').get.call(s.node)||'').replace(/<style\b[\s\S]*?<\/style>/gi,'[style]')
        .replace(/<script\b[\s\S]*?<\/script>/gi,'[script]').replace(/\btoken="[^"]*"/gi,'token="[omitted]"')
        .replace(/data:[^"'<>\s]+/g,'data:[omitted]').slice(0,7000):undefined,
-     elements:[...s.node.querySelectorAll('*')]
+     elements:[...query(s.node,'*')]
      .filter(e=>!['script','style','link','meta'].includes(name(e))).slice(0,100)
-     .map(e=>({tag:name(e),nodeName:e.nodeName,type:Object.prototype.toString.call(e),
+     .map(e=>({tag:name(e),nodeName:nodeName.call(e),
                id:attr(e,'id'),role:attr(e,'role'),tabindex:attr(e,'tabindex'),
                aria:attr(e,'aria-label'),class:attr(e,'class'),
-               text:['p','label','button','span','div'].includes(name(e))?(e.textContent||'').trim().slice(0,300):undefined}))}))};
+               text:['p','label','button','span','div'].includes(name(e))?text(e).trim().slice(0,300):undefined}))}))};
+})'''
+STATE = INSPECT + '(false)'
+CAPTURE_STATE = INSPECT + '(true)'
+TARGET_STATE = r'''(() => {
+ const target=globalThis.__ruyiHeldTarget;
+ return {aria:Element.prototype.getAttribute.call(target,'aria-label'),
+   connected:Object.getOwnPropertyDescriptor(Node.prototype,'isConnected').get.call(target)};
 })()'''
 
 
@@ -65,7 +90,10 @@ def public_url(url):
     if url.startswith('data:'):
         return url.split(',',1)[0]+',[data omitted]'
     parsed = urlsplit(url)
-    return urlunsplit((parsed.scheme, parsed.netloc, parsed.path, '', ''))
+    hostname=parsed.hostname or ''
+    if ':' in hostname:hostname='['+hostname+']'
+    authority=hostname+(':'+str(parsed.port) if parsed.port is not None else '')
+    return urlunsplit((parsed.scheme, authority, parsed.path, '', ''))
 
 
 def main():
@@ -74,15 +102,43 @@ def main():
     parser.add_argument('--timeout', type=float, default=30)
     parser.add_argument('--profile', choices=('linux','default'), default='linux')
     parser.add_argument('--shell', type=Path)
+    proxy_source=parser.add_mutually_exclusive_group()
+    proxy_source.add_argument('--proxy-env', metavar='NAME', help='Read the proxy URL from an environment variable; report only whether a proxy was used')
+    proxy_source.add_argument('--proxy-file', type=Path, help='Read one proxy URL per line from a local file')
+    parser.add_argument('--proxy-index', type=int, default=1, help='Select a proxy from the file, counting from 1')
+    parser.add_argument('--proxy-as-http', action='store_true', help='Explicitly use the HTTP CONNECT endpoint of a proxy gateway that also supports SOCKS')
     parser.add_argument('--hold', type=float, default=0, help='Send trusted down/up with the event loop running between them')
+    parser.add_argument('--until-complete', action='store_true', help='Release when the widget asks to wait; --hold is the maximum duration')
+    parser.add_argument('--accessible', action='store_true', help='Use the displayed two-click accessibility flow')
+    parser.add_argument('--wait', type=float, default=0, help='Wait this many seconds after the widget appears before interacting')
+    parser.add_argument('--check-walmart', action='store_true', help='After interacting, fetch the Walmart homepage in the same session and record its HTTP status/title')
     parser.add_argument('--output', type=Path, default=Path('artifacts/perimeterx/probe.json'))
     args = parser.parse_args()
-    if not math.isfinite(args.timeout) or args.timeout<=0 or not math.isfinite(args.hold) or not 0<=args.hold<=15:
-        parser.error('timeout must be positive and hold must be between 0 and 15 seconds')
+    if (not math.isfinite(args.timeout) or args.timeout<=0 or not math.isfinite(args.hold) or
+            not 0<=args.hold<=60 or not math.isfinite(args.wait) or not 0<=args.wait<=60):
+        parser.error('timeout must be positive; hold and wait must be between 0 and 60 seconds')
+    if args.until_complete and not args.hold:
+        parser.error('--until-complete requires a positive --hold maximum')
+    proxy=os.environ.get(args.proxy_env) if args.proxy_env else None
+    if args.proxy_env and not proxy:
+        parser.error('--proxy-env must name a nonempty environment variable')
+    if args.proxy_index<1 or args.proxy_index!=1 and not args.proxy_file:
+        parser.error('--proxy-index must select a line in --proxy-file, counting from 1')
+    if args.proxy_file:
+        proxies=[line.strip() for line in args.proxy_file.read_text().splitlines()
+                 if line.strip() and not line.lstrip().startswith('#')]
+        if args.proxy_index>len(proxies):parser.error('--proxy-index exceeds the number of proxies in the file')
+        proxy=proxies[args.proxy_index-1]
+    original_proxy=proxy
+    if args.proxy_as_http:
+        if not proxy:parser.error('--proxy-as-http requires a proxy')
+        address=urlsplit(proxy)
+        proxy=urlunsplit(('http',address.netloc,address.path,address.query,address.fragment))
     bindings = load_bindings()
-    report = {'url':args.url,'profile':args.profile,'verified':False,'errors':[],'states':[],'input':[]}
+    report = {'url':public_url(args.url),'profile':args.profile,'proxy':bool(proxy),'verified':False,
+              'outcome':'unconfirmed','errors':[],'states':[],'input':[],'progress':[]}
     started=monotonic()
-    with bindings.Context(shell=args.shell,timeout=30,proxy=None,tls='159') as context:
+    with bindings.Context(shell=args.shell,timeout=30,proxy=proxy,tls='159') as context:
         context.configure_clock('system')
         if args.profile=='linux':context.configure_fingerprint(_linux_profile())
         context.navigate(args.url)
@@ -90,6 +146,11 @@ def main():
         held=None
         hold_started=None
         released=False
+        ready_since=None
+        accessible_started=False
+        confirm_since=None
+        target_state={}
+        backend_window='window'
         try:
             while monotonic()-started<args.timeout:
                 context.timeout=min(15,max(0.5,args.timeout-(monotonic()-started)))
@@ -97,20 +158,50 @@ def main():
                 except bindings.JSError as error:
                     record={'name':error.name,'message':error.message,'stack':error.stack}
                     if record not in report['errors']:report['errors'].append(record)
-                state=json.loads(context.eval('JSON.stringify('+STATE+')'))
-                for document in state['documents']:
-                    document['url']=public_url(document['url'])
-                    document['scripts']=[public_url(url) for url in document['scripts']]
-                if state!=last:
-                    report['states'].append({'elapsed':round(monotonic()-started,3),'state':state})
-                    print(json.dumps(report['states'][-1],ensure_ascii=False),flush=True)
-                    last=state
-                if args.hold and held is None:
+                state=None
+                if held is not None and not released:
+                    target_state=json.loads(context.eval('JSON.stringify('+TARGET_STATE+')'))
+                    if not report['progress'] or report['progress'][-1]['state']!=target_state:
+                        report['progress'].append({'elapsed':round(monotonic()-started,3),'state':target_state})
+                else:
+                    source=CAPTURE_STATE if args.hold or args.accessible else STATE
+                    state=json.loads(context.eval('JSON.stringify('+source+')'))
+                    for root in state['roots']:
+                        if root['type']==9 and any(e.get('id')=='px-captcha' for e in root['elements']):
+                            backend_window='('+root['path']+').defaultView'
+                    for document in state['documents']:
+                        document['url']=public_url(document['url'])
+                        document['scripts']=[public_url(url) for url in document['scripts']]
+                    if state!=last:
+                        report['states'].append({'elapsed':round(monotonic()-started,3),'state':state})
+                        print(json.dumps(report['states'][-1],ensure_ascii=False),flush=True)
+                        last=state
+                    if ready_since is None and any(b.get('aria') in ('Accessible challenge','Press & Hold Human Challenge')
+                                                  for b in state['buttons'] if b['visible']):
+                        ready_since=monotonic()
+                    alerts=[e.get('text','') for root in state['roots'] for e in root['elements']
+                            if e.get('role')=='alert']
+                    if any('please try again' in text.lower() for text in alerts):
+                        report['outcome']='rejected'
+                        break
+                ready=ready_since is not None and monotonic()-ready_since>=args.wait
+                if args.accessible and state is not None and ready:
+                    if not accessible_started and any(b['visible'] and b.get('aria')=='Accessible challenge' for b in state['buttons']):
+                        context.click('globalThis.__ruyiPxCandidates.accessible',hold_ms=110)
+                        accessible_started=True
+                        report['input'].append({'event':'accessible_start','elapsed':round(monotonic()-started,3)})
+                    if accessible_started and not released and any(b['visible'] and b.get('aria')=='Press again' for b in state['buttons']):
+                        if confirm_since is None:confirm_since=monotonic()
+                        elif monotonic()-confirm_since>=0.4:
+                            context.click('globalThis.__ruyiPxCandidates.confirm',hold_ms=110)
+                            released=True
+                            report['input'].append({'event':'accessible_confirm','elapsed':round(monotonic()-started,3)})
+                if args.hold and not args.accessible and ready and held is None and state is not None:
                     candidates=[button for button in state['buttons'] if button.get('visible') and
                         'Press & Hold' in (button.get('aria') or '') and button['rect']['width']>0]
                     if candidates:
                         held=candidates[0]
-                        context.eval('globalThis.__ruyiHeldTarget=('+held['path']+');true')
+                        context.eval('globalThis.__ruyiHeldTarget=globalThis.__ruyiPxCandidates.hold;true')
                         held['path']='globalThis.__ruyiHeldTarget'
                         rect=held['rect']
                         init={'clientX':round(rect['x']+rect['width']/2),'clientY':round(rect['y']+rect['height']/2),
@@ -129,17 +220,40 @@ def main():
                             if event=='mousedown':context.eval('globalThis.__ruyiHeldTarget.focus();true')
                         hold_started=monotonic()
                         report['input'].append({'event':'down','elapsed':round(monotonic()-started,3)})
-                if held is not None and not released and monotonic()-hold_started>=args.hold:
+                complete='completed' in (target_state.get('aria') or '').lower() or target_state.get('aria')=='Please wait'
+                if held is not None and not released and (monotonic()-hold_started>=args.hold or args.until_complete and complete):
                     for event in ('pointerup','mouseup','click'):
                         fields={**init,**(pointer if event.startswith('pointer') or event=='click' else {})}
                         fields['buttons']=0
                         if event in ('pointerup','click'):fields['pressure']=0
                         context.dispatch_input(event,target=held['path'],**fields)
                     released=True
+                    if complete:report['outcome']='client_completed'
                     report['input'].append({'event':'up','elapsed':round(monotonic()-started,3)})
         except Exception as error:
+            report['outcome']='error'
             report['error']=f'{type(error).__name__}: {error}'
         if not context.closed:
+            if args.check_walmart:
+                context.timeout=20
+                try:
+                    context.eval(r'''globalThis.__ruyiPxBackend=null;
+                        FETCH('https://www.walmart.com/',{credentials:'include'})
+                          .then(async r=>{const html=await r.text();
+                            const title=(html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)||[])[1]||'';
+                            __ruyiPxBackend={status:r.status,title:title.slice(0,200),url:r.url,
+                              blocked:/robot or human\?/i.test(title)||new URL(r.url).pathname==='/blocked'};})
+                          .catch(e=>__ruyiPxBackend={error:String(e)});true'''.replace('FETCH',backend_window+'.fetch'))
+                    deadline=monotonic()+20
+                    while monotonic()<deadline:
+                        context.advance(100,max_tasks=200)
+                        result=json.loads(context.eval('JSON.stringify(__ruyiPxBackend)'))
+                        if result is not None:
+                            if 'url' in result:result['url']=public_url(result['url'])
+                            report['protected_page']=result
+                            break
+                    else:report['protected_page']={'error':'response timeout'}
+                except Exception as error:report['protected_page']={'error':f'{type(error).__name__}: {error}'}
             context.timeout=5
             report['network']=[{key:(public_url(row[key]) if key=='url' else row[key])
                 for key in ('method','url','status','error') if key in row} for row in context.net_log()]
@@ -147,8 +261,11 @@ def main():
                                for row in context.console_log() if row.get('level') in ('error','warn')]
     report['elapsed']=round(monotonic()-started,3)
     args.output.parent.mkdir(parents=True,exist_ok=True)
-    args.output.write_text(json.dumps(report,indent=2,ensure_ascii=False)+'\n')
-    print(json.dumps({'elapsed':report['elapsed'],'verified':report['verified'],'errors':len(report['errors']),
+    encoded=json.dumps(report,indent=2,ensure_ascii=False)
+    if proxy:encoded=encoded.replace(proxy,'[proxy omitted]')
+    if original_proxy:encoded=encoded.replace(original_proxy,'[proxy omitted]')
+    args.output.write_text(encoded+'\n')
+    print(json.dumps({'elapsed':report['elapsed'],'outcome':report['outcome'],'verified':report['verified'],'errors':len(report['errors']),
                       'output':str(args.output)}),flush=True)
 
 
