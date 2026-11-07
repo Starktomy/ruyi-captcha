@@ -85,6 +85,21 @@ TARGET_STATE = r'''(() => {
  return {aria:Element.prototype.getAttribute.call(target,'aria-label'),
    connected:Object.getOwnPropertyDescriptor(Node.prototype,'isConnected').get.call(target)};
 })()'''
+INPUT_TARGET = r'''(point => {
+ const held=globalThis.__ruyiHeldTarget;
+ const doc=Object.getOwnPropertyDescriptor(Node.prototype,'ownerDocument').get.call(held);
+ const hit=Reflect.apply(Document.prototype.elementFromPoint,doc,[point.clientX,point.clientY]);
+ const contains=Node.prototype.contains;
+ const input=globalThis.__ruyiPxInputTarget=hit&&contains.call(held,hit)?hit:held;
+ const path=globalThis.__ruyiPxEnterPath=[];
+ const parent=Object.getOwnPropertyDescriptor(Node.prototype,'parentElement').get;
+ for(let n=input;n;n=parent.call(n))path.unshift(n);
+ if(!globalThis.__ruyiPxDownTarget)globalThis.__ruyiPxDownTarget=input;
+ let click=globalThis.__ruyiPxDownTarget;
+ while(click&&!contains.call(click,input))click=parent.call(click);
+ globalThis.__ruyiPxClickTarget=click||held;
+ return {descendant:input!==held,pathLength:path.length};
+})'''
 OBSERVE_SERVER_RESULT = r'''(win => {
  const app=win._pxAppId;
  if(typeof app!=='string')return false;
@@ -99,7 +114,8 @@ OBSERVE_SERVER_RESULT = r'''(win => {
    const value=typeof status==='number'?status:
      typeof status==='string' && /^-?\d{1,4}$/.test(status)?Number(status):NaN;
    if(Number.isInteger(value) && Math.abs(value)<=9999 && results.length<64)
-     results.push({status:value});
+     {results.push({status:value});
+      try{globalThis.__ruyiPxRecordStatus?.(value)}catch(e){}}
    return Reflect.apply(original,this,[status,...args]);
  };
  observed.add(handler);
@@ -140,6 +156,7 @@ def main():
     parser.add_argument('--proxy-as-http', action='store_true', help='Explicitly use the HTTP CONNECT endpoint of a proxy gateway that also supports SOCKS')
     parser.add_argument('--hold', type=float, default=0, help='Send trusted down/up with the event loop running between them')
     parser.add_argument('--until-complete', action='store_true', help='Release when the widget asks to wait; --hold is the maximum duration')
+    parser.add_argument('--hit-test', action='store_true', help='Dispatch at the layout hit within the hold control and use the common click ancestor')
     parser.add_argument('--accessible', action='store_true', help='Use the displayed two-click accessibility flow')
     parser.add_argument('--observe-server-result', action='store_true',
                         help='Instrument the PX764 result callback, forwarding it unchanged; diagnostic results are not clean acceptance evidence')
@@ -167,18 +184,48 @@ def main():
         if not proxy:parser.error('--proxy-as-http requires a proxy')
         address=urlsplit(proxy)
         proxy=urlunsplit(('http',address.netloc,address.path,address.query,address.fragment))
-    bindings = load_bindings()
     profile=json.loads(args.profile_file.read_text()) if args.profile_file else _linux_profile() if args.profile=='linux' else None
     if profile is not None and not isinstance(profile,dict):parser.error('profile file must contain a JSON object')
     report = {'url':public_url(args.url),'profile':'file' if args.profile_file else args.profile,'proxy':bool(proxy),'verified':False,
-              'outcome':'unconfirmed','errors':[],'states':[],'input':[],'progress':[]}
+              'outcome':'unconfirmed','stage':'startup','timings':{'startup':0},
+              'errors':[],'states':[],'input':[],'progress':[]}
     if args.observe_server_result:report['instrumented']=True
     if args.profile_file:report['profile_sha256']=hashlib.sha256(args.profile_file.read_bytes()).hexdigest()
     started=monotonic()
-    with bindings.Context(shell=args.shell,timeout=30,proxy=proxy,tls='159') as context:
+    try:
+        run_probe(args, report, proxy, profile, load_bindings(), started)
+    except Exception as error:
+        report['outcome']='error'
+        report['error']=f'{type(error).__name__}: {error}'
+    report['elapsed']=round(monotonic()-started,3)
+    args.output.parent.mkdir(parents=True,exist_ok=True)
+    encoded=json.dumps(report,indent=2,ensure_ascii=False)
+    if proxy:encoded=encoded.replace(proxy,'[proxy omitted]')
+    if original_proxy:encoded=encoded.replace(original_proxy,'[proxy omitted]')
+    args.output.write_text(encoded+'\n')
+    print(json.dumps({'elapsed':report['elapsed'],'outcome':report['outcome'],'stage':report['stage'],
+                      'verified':report['verified'],'errors':len(report['errors']),
+                      'output':str(args.output)}),flush=True)
+
+
+def run_probe(args, report, proxy, profile, bindings, started):
+    """Keep setup failures inside the same report lifecycle as interaction failures."""
+    def stage(name):
+        report['stage']=name
+        report['timings'].setdefault(name,round(monotonic()-started,3))
+
+    server_results=[]
+    def record_status(value):
+        if type(value) is int and abs(value)<=9999 and len(server_results)<64:
+            server_results.append({'status':value})
+    with bindings.Context(shell=args.shell,timeout=min(30,args.timeout),proxy=proxy,tls='159') as context:
+        stage('configuration')
         context.configure_clock('system')
         if profile is not None:context.configure_fingerprint(profile)
+        if args.observe_server_result:context.expose(record_status,'__ruyiPxRecordStatus')
+        stage('navigation')
         context.navigate(args.url)
+        stage('loading')
         last=None
         held=None
         hold_started=None
@@ -190,6 +237,14 @@ def main():
         backend_window='window'
         try:
             while monotonic()-started<args.timeout:
+                if args.observe_server_result and server_results:
+                    statuses=[row['status'] for row in server_results]
+                    if 0 in statuses:
+                        report['outcome']='server_accepted_instrumented'
+                        break
+                    if -1 in statuses:
+                        report['outcome']='rejected'
+                        break
                 context.timeout=min(15,max(0.5,args.timeout-(monotonic()-started)))
                 try:context.advance(100,max_tasks=400)
                 except bindings.JSError as error:
@@ -218,6 +273,7 @@ def main():
                     if ready_since is None and any(b.get('aria') in ('Accessible challenge','Press & Hold Human Challenge')
                                                   for b in state['buttons'] if b['visible']):
                         ready_since=monotonic()
+                        stage('ready')
                     alerts=[e.get('text','') for root in state['roots'] for e in root['elements']
                             if e.get('role')=='alert']
                     if any('please try again' in text.lower() for text in alerts):
@@ -226,6 +282,7 @@ def main():
                 ready=ready_since is not None and monotonic()-ready_since>=args.wait
                 if args.accessible and state is not None and ready:
                     if not accessible_started and any(b['visible'] and b.get('aria')=='Accessible challenge' for b in state['buttons']):
+                        stage('interaction')
                         context.click('globalThis.__ruyiPxCandidates.accessible',hold_ms=110)
                         accessible_started=True
                         report['input'].append({'event':'accessible_start','elapsed':round(monotonic()-started,3)})
@@ -234,11 +291,13 @@ def main():
                         elif monotonic()-confirm_since>=0.4:
                             context.click('globalThis.__ruyiPxCandidates.confirm',hold_ms=110)
                             released=True
+                            stage('awaiting_result')
                             report['input'].append({'event':'accessible_confirm','elapsed':round(monotonic()-started,3)})
                 if args.hold and not args.accessible and ready and held is None and state is not None:
                     candidates=[button for button in state['buttons'] if button.get('visible') and
                         'Press & Hold' in (button.get('aria') or '') and button['rect']['width']>0]
                     if candidates:
+                        stage('interaction')
                         held=candidates[0]
                         context.eval('globalThis.__ruyiHeldTarget=globalThis.__ruyiPxCandidates.hold;true')
                         held['path']='globalThis.__ruyiHeldTarget'
@@ -247,36 +306,51 @@ def main():
                         init={**input_point(rect,screen),'button':0,'buttons':0,'bubbles':True,
                               'composed':True,'cancelable':True,'detail':1}
                         pointer={'pointerId':0,'pointerType':'mouse','isPrimary':True,'width':1,'height':1}
+                        input_target=held['path']
+                        if args.hit_test:
+                            point_json=json.dumps({key:init[key] for key in ('clientX','clientY')})
+                            hit=context.eval(INPUT_TARGET+'('+point_json+')')
+                            report.setdefault('input_targets',{})['down']=hit
+                            input_target='globalThis.__ruyiPxInputTarget'
                         for event in ('pointerover','pointerenter','mouseover','mouseenter','pointermove','mousemove','pointerdown','mousedown'):
                             fields={**init,**(pointer if event.startswith('pointer') else {})}
                             if event in ('pointerover','pointerenter','pointermove'):fields['button']=-1
                             if event in ('pointerenter','mouseenter'):
                                 fields['bubbles']=False
                                 fields['cancelable']=False
+                                fields['composed']=False
                             fields['detail']=1 if event=='mousedown' else 0
                             if event in ('pointerdown','mousedown'):fields['buttons']=1
                             if event.startswith('pointer'):fields['pressure']=0.5 if fields['buttons'] else 0
-                            context.dispatch_input(event,target=held['path'],**fields)
+                            targets=([f'globalThis.__ruyiPxEnterPath[{i}]' for i in range(hit['pathLength'])]
+                                     if args.hit_test and event in ('pointerenter','mouseenter') else [input_target])
+                            for target in targets:context.dispatch_input(event,target=target,**fields)
                             if event=='mousedown':context.eval('globalThis.__ruyiHeldTarget.focus();true')
                         hold_started=monotonic()
                         report['input'].append({'event':'down','elapsed':round(monotonic()-started,3)})
                 complete='completed' in (target_state.get('aria') or '').lower() or target_state.get('aria')=='Please wait'
                 if held is not None and not released and (monotonic()-hold_started>=args.hold or args.until_complete and complete):
+                    if args.hit_test:
+                        hit=context.eval(INPUT_TARGET+'('+point_json+')')
+                        report['input_targets']['up']=hit
                     for event in ('pointerup','mouseup','click'):
+                        if any(row['status']==0 for row in server_results):break
                         fields={**init,**(pointer if event.startswith('pointer') or event=='click' else {})}
                         fields['buttons']=0
                         fields['detail']=0 if event=='pointerup' else 1
                         if event in ('pointerup','click'):fields['pressure']=0
-                        context.dispatch_input(event,target=held['path'],**fields)
+                        target=('globalThis.__ruyiPxClickTarget' if event=='click' else 'globalThis.__ruyiPxInputTarget') if args.hit_test else held['path']
+                        context.dispatch_input(event,target=target,**fields)
                     released=True
+                    stage('awaiting_result')
                     if complete:report['outcome']='client_completed'
                     report['input'].append({'event':'up','elapsed':round(monotonic()-started,3)})
         except Exception as error:
             report['outcome']='error'
             report['error']=f'{type(error).__name__}: {error}'
+        if args.observe_server_result:
+            report['server_results']=server_results
         if not context.closed:
-            if args.observe_server_result:
-                report['server_results']=json.loads(context.eval('JSON.stringify(globalThis.__ruyiPxServerResults||[])'))
             if args.check_walmart:
                 context.timeout=20
                 try:
@@ -298,18 +372,18 @@ def main():
                     else:report['protected_page']={'error':'response timeout'}
                 except Exception as error:report['protected_page']={'error':f'{type(error).__name__}: {error}'}
             context.timeout=5
-            report['network']=[{key:(public_url(row[key]) if key=='url' else row[key])
-                for key in ('method','url','status','error') if key in row} for row in context.net_log()]
-            report['console']=[{key:row[key] for key in ('level','text','realm') if key in row}
-                               for row in context.console_log() if row.get('level') in ('error','warn')]
-    report['elapsed']=round(monotonic()-started,3)
-    args.output.parent.mkdir(parents=True,exist_ok=True)
-    encoded=json.dumps(report,indent=2,ensure_ascii=False)
-    if proxy:encoded=encoded.replace(proxy,'[proxy omitted]')
-    if original_proxy:encoded=encoded.replace(original_proxy,'[proxy omitted]')
-    args.output.write_text(encoded+'\n')
-    print(json.dumps({'elapsed':report['elapsed'],'outcome':report['outcome'],'verified':report['verified'],'errors':len(report['errors']),
-                      'output':str(args.output)}),flush=True)
+            for source in ('network','console'):
+                if context.closed:break
+                try:
+                    if source=='network':
+                        report['network']=[{key:(public_url(row[key]) if key=='url' else row[key])
+                            for key in ('method','url','status','error') if key in row} for row in context.net_log()]
+                    else:
+                        report['console']=[{key:row[key] for key in ('level','text','realm') if key in row}
+                                           for row in context.console_log() if row.get('level') in ('error','warn')]
+                except Exception as error:
+                    report.setdefault('diagnostic_errors',[]).append({
+                        'source':source,'error':f'{type(error).__name__}: {error}'})
 
 
 if __name__=='__main__':main()

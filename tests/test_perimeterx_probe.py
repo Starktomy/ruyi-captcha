@@ -40,8 +40,72 @@ class PerimeterXUrlTests(unittest.TestCase):
         self.assertNotIn("secret", probe.public_url("data:image/png;base64,secret"))
 
 
+class PerimeterXReportLifecycleTests(unittest.TestCase):
+    def test_runtime_startup_failure_still_writes_a_report(self):
+        with tempfile.TemporaryDirectory() as folder:
+            output=Path(folder)/'nested/report.json'
+            argv=['probe','--profile','default','--output',str(output)]
+            with patch.object(probe,'load_bindings',side_effect=RuntimeUnavailable('offline missing runtime')),\
+                    patch.object(sys,'argv',argv),redirect_stdout(io.StringIO()):
+                probe.main()
+            report=json.loads(output.read_text())
+        self.assertEqual(report['outcome'],'error')
+        self.assertEqual(report['stage'],'startup')
+        self.assertIn('offline missing runtime',report['error'])
+        self.assertFalse(report['verified'])
+        self.assertEqual(report['input'],[])
+
+    def test_navigation_failure_closes_context_and_redacts_proxy(self):
+        opened=[]
+        closed=[]
+        proxy_url='http://offline-user:offline-password@proxy.invalid:8888'
+        class FailedNavigation:
+            def __init__(self,**kwargs):opened.append(kwargs)
+            def __enter__(self):return self
+            def __exit__(self,*exc):closed.append(True)
+            def configure_clock(self,mode):pass
+            def navigate(self,url):raise TimeoutError('offline navigation through '+proxy_url)
+        with tempfile.TemporaryDirectory() as folder:
+            output=Path(folder)/'report.json'
+            argv=['probe','--url','https://probe.test/','--profile','default','--timeout','1',
+                  '--proxy-env','RUYI_PROBE_TEST_PROXY','--output',str(output)]
+            with patch.dict('os.environ',{'RUYI_PROBE_TEST_PROXY':proxy_url}),\
+                    patch.object(probe,'load_bindings',return_value=SimpleNamespace(Context=FailedNavigation)),\
+                    patch.object(sys,'argv',argv),redirect_stdout(io.StringIO()):
+                probe.main()
+            encoded=output.read_text()
+            report=json.loads(encoded)
+        self.assertEqual(closed,[True])
+        self.assertEqual(opened[0]['timeout'],1)
+        self.assertEqual(report['outcome'],'error')
+        self.assertEqual(report['stage'],'navigation')
+        self.assertEqual(list(report['timings']),['startup','configuration','navigation'])
+        self.assertIn('[proxy omitted]',report['error'])
+        self.assertNotIn('offline-password',encoded)
+        self.assertFalse(report['verified'])
+
+
 @unittest.skipUnless(SHELL.is_file(), "compatible native runtime is not installed")
 class PerimeterXProbeTests(unittest.TestCase):
+    def test_diagnostics_failure_does_not_overwrite_rejection(self):
+        class OfflineContext(bindings.Context):
+            def navigate(self,url):
+                self.load_page(url,'<!doctype html><p role="alert">Please try again</p>')
+            def net_log(self):raise TimeoutError('offline log timeout')
+        with tempfile.TemporaryDirectory() as folder:
+            output=Path(folder)/'report.json'
+            argv=['probe','--url','https://probe.test/','--timeout','1','--output',str(output)]
+            with patch.object(probe,'load_bindings',return_value=SimpleNamespace(
+                    Context=OfflineContext,JSError=bindings.JSError)),patch.object(sys,'argv',argv),redirect_stdout(io.StringIO()):
+                probe.main()
+            report=json.loads(output.read_text())
+        self.assertEqual(report['outcome'],'rejected')
+        self.assertFalse(report['verified'])
+        self.assertEqual(report['stage'],'loading')
+        self.assertEqual(report['diagnostic_errors'],[
+            {'source':'network','error':'TimeoutError: offline log timeout'}])
+        self.assertIn('console',report)
+
     def test_hold_sequence_delivers_firefox_flags_to_the_frame(self):
         captured=[]
         class OfflineContext(bindings.Context):
@@ -60,7 +124,7 @@ class PerimeterXProbeTests(unittest.TestCase):
                     for(const type of ['pointerover','pointerenter','mouseover','mouseenter',
                         'pointermove','mousemove','pointerdown','mousedown','pointerup','mouseup','click'])
                         b.addEventListener(type,e=>events.push([e.type,e.detail,e.bubbles,
-                            e.cancelable,e.isTrusted,e.view===window]));
+                            e.cancelable,e.composed,e.isTrusted,e.view===window]));
                     b.addEventListener('pointerdown',()=>setTimeout(()=>
                         b.setAttribute('aria-label','Human Challenge completed, please wait'),80));
                     b.addEventListener('mouseup',()=>_fixturehandler.PX764(-1,'offline-observer-secret'));
@@ -83,13 +147,69 @@ class PerimeterXProbeTests(unittest.TestCase):
                   ['pointermove',0,True,True],['mousemove',0,True,True],
                   ['pointerdown',0,True,True],['mousedown',1,True,True],
                   ['pointerup',0,True,True],['mouseup',1,True,True],['click',1,True,True]]
-        self.assertEqual(captured,[row+[True,True] for row in expected])
+        self.assertEqual(captured,[row+[row[0] not in ('pointerenter','mouseenter'),True,True] for row in expected])
         self.assertEqual(report['outcome'],'rejected')
         self.assertFalse(report['verified'])
         self.assertTrue(report['instrumented'])
         self.assertEqual(report['server_results'],[{'status':-1}])
         self.assertNotIn('offline-observer-secret',json.dumps(report))
         self.assertEqual([row['event'] for row in report['input']],['down','up'])
+
+    def test_hit_target_changes_and_server_result_survives_navigation(self):
+        captured=[]
+        closed_paths=[]
+        class OfflineContext(bindings.Context):
+            def navigate(self,url):
+                self.put_resource('https://probe.test/done','<!doctype html><p>Done</p>')
+                self.put_resource('https://probe.test/child','''<!doctype html>
+                    <div id="px-captcha" role="button" aria-label="Press & Hold Human Challenge"
+                      style="position:relative;width:200px;height:80px">
+                        <div id="before" style="position:absolute;inset:0"></div>
+                    </div><script>
+                    const button=document.querySelector('#px-captcha'),events=[];
+                    globalThis._pxAppId='PXfixture';
+                    globalThis._fixturehandler={PX764(status,token){
+                        if(status!==0||token!=='offline-private-token')throw new Error('callback arguments changed');
+                        top.location.href='https://probe.test/done';
+                    }};
+                    for(const type of ['pointerdown','mouseup','click'])
+                        button.addEventListener(type,e=>events.push([e.type,e.target.id]));
+                    button.addEventListener('pointerdown',()=>setTimeout(()=>{
+                        button.innerHTML='<div id="after" style="position:absolute;inset:0"></div>';
+                        button.setAttribute('aria-label','Human Challenge completed, please wait');
+                    },80));
+                    button.addEventListener('click',()=>{
+                        parent.__testRecordEvents(events);
+                        _fixturehandler.PX764(0,'offline-private-token');
+                    });
+                    </script>''')
+                self.load_page(url,'<!doctype html><iframe src="https://probe.test/child"></iframe>')
+                self.expose(lambda rows:captured.extend(rows),'__testRecordEvents')
+            def dispatch_input(self,event_type,**kwargs):
+                delivered=super().dispatch_input(event_type,**kwargs)
+                if event_type=='click':self.advance(100,max_tasks=400)
+                return delivered
+            def close(self):
+                if not self.closed:
+                    try:closed_paths.append(self.eval('location.pathname'))
+                    finally:super().close()
+        with tempfile.TemporaryDirectory() as folder:
+            output=Path(folder)/'report.json'
+            argv=['probe','--url','https://probe.test/','--hit-test','--hold','1','--until-complete',
+                  '--observe-server-result','--timeout','3','--output',str(output)]
+            with patch.object(probe,'load_bindings',return_value=SimpleNamespace(
+                    Context=OfflineContext,JSError=bindings.JSError)),patch.object(sys,'argv',argv),redirect_stdout(io.StringIO()):
+                probe.main()
+            report=json.loads(output.read_text())
+        self.assertEqual(captured,[['pointerdown','before'],['mouseup','after'],['click','px-captcha']])
+        self.assertEqual(closed_paths,['/done'])
+        self.assertEqual(report['server_results'],[{'status':0}])
+        self.assertEqual(report['outcome'],'server_accepted_instrumented')
+        self.assertTrue(report['instrumented'])
+        self.assertFalse(report['verified'])
+        self.assertTrue(report['input_targets']['down']['descendant'])
+        self.assertTrue(report['input_targets']['up']['descendant'])
+        self.assertNotIn('offline-private-token',json.dumps(report))
 
     def test_closed_frame_scan_avoids_page_hooks_and_redacts_secrets(self):
         with bindings.Context(shell=SHELL) as context:

@@ -1,0 +1,57 @@
+{
+  "date": "2026-11-07",
+  "entry_url": "https://nopecha.com/captcha/perimeterx",
+  "embedded_challenge_origin": "https://www.walmart.com",
+  "kernel": {
+    "branch": "fix/perimeterx-browser-compat",
+    "head": "b513abcca03e9d33affc572427c202169afa567f",
+    "uncommitted_native_changes": true,
+    "runtime_sha256": "b6e543abda36f0062ff822800dfc1cdb7259c8b5099db0e3ef9a52a056e0fc7a",
+    "native_tests_last_completed": 47,
+    "production_pin": "9991779"
+  },
+  "live_run": {
+    "profile": "linux",
+    "proxy": false,
+    "result_callback_instrumented": false,
+    "hit_test": true,
+    "elapsed_seconds": 9.881,
+    "input_down_seconds": 5.189,
+    "client_completion_observed_seconds": 6.301,
+    "input_up_seconds": 6.352,
+    "retry_alert_observed_seconds": 9.712,
+    "javascript_errors": 0,
+    "outcome": "rejected",
+    "rejection_evidence": "Please try again",
+    "server_result_code_observed": false,
+    "verified": false,
+    "limitations": [
+      "Single direct-connection sample; no latency or success-rate comparison.",
+      "The retry UI establishes challenge rejection but does not expose its cause.",
+      "No independent test-application backend or enforcement log was available."
+    ]
+  },
+  "offline_safety_followup": {
+    "runtime_sha256": "5e8788c081ac0c22647c97ae6eae04c92324428e794d34e9c9224bbdd21c25cf",
+    "fixed": "Missing vertex-stage output could index an empty varying buffer and terminate the native process.",
+    "behavior": "The rasterizer rejects missing or mismatched declared outputs with INVALID_OPERATION and leaves pixels unchanged.",
+    "limitations": "This guard does not implement full shader-link validation.",
+    "native_tests": 49,
+    "native_tests_skipped": 0,
+    "native_tests_seconds": 5.138,
+    "application_tests": 59,
+    "application_tests_skipped": 0,
+    "application_tests_seconds": 6.708,
+    "smoke_passed": true,
+    "live_retest_performed": false,
+    "perimeterx_verified": false
+  },
+  "diagnostic_changes": {
+    "reports_survive_runtime_startup_and_navigation_errors": true,
+    "stage_and_stage_start_times": true,
+    "log_collection_errors_preserve_challenge_outcome": true,
+    "application_tests": 59,
+    "application_tests_skipped": 0,
+    "application_tests_seconds": 6.912
+  }
+}
