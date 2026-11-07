@@ -1,6 +1,6 @@
 # 2026-11-07：PerimeterX 排查与真实验证
 
-**ff-ruyijs 尚未通过这个挑战。** 已修复四个可独立复现的浏览器兼容问题，完善诊断工具，
+**ff-ruyijs 尚未通过这个挑战。** 已修复五个可独立复现的浏览器兼容问题，完善诊断工具，
 并使用用户提供的代理做了真实对照；PerimeterX 仍未注册为 SDK/API 支持类型。
 
 NopeCHA 的页面 `https://nopecha.com/captcha/perimeterx` 嵌入
@@ -26,9 +26,49 @@ NopeCHA 的页面 `https://nopecha.com/captcha/perimeterx` 嵌入
    [`9b46ad4`](https://github.com/Starktomy/ff-ruyijs/commit/9b46ad4) 覆盖嵌套 frame、
    跨域导航、srcdoc、顶层文档替换及 GC。
 
-四个问题均先在不访问网络的最小用例中复现，再修复。最新 15 项原生测试和 smoke
-检查通过；应用 54 项测试通过。新生成的美国语言／时区 profile 在最新内核上取得
+这四个问题均先在不访问网络的最小用例中复现，再修复。当时 15 项原生测试和 smoke
+检查通过；应用 54 项测试通过。新生成的美国语言／时区 profile 在该内核上取得
 真实 Turnstile token，约 4.5 秒，并被 CapSkip 后端接受。这个回归不代表 PerimeterX 通过。
+
+5. 与本地完整 Firefox 159 对照，MouseEvent/WheelEvent 构造器应向下取整坐标，
+   PointerEvent 保留小数，但 click、auxclick、contextmenu 也使用整数。可信鼠标输入
+   使用最近整数，mozInputSource 为鼠标；之前错误地保留了小数或返回未知来源。
+   [`b513abc`](https://github.com/Starktomy/ff-ruyijs/commit/b513abc) 在原生事件构造处
+   修正这些行为，沿用现有 UTF-16 事件类型键，不覆写页面属性。27 组构造器用例与参考
+   浏览器完全相同，覆盖顶层和 iframe；全部 37 项原生测试与 smoke 检查通过，应用
+   55 项测试通过。应用探针先对屏幕物理点取整，再推导 iframe 内的指针坐标，避免
+   将 iframe 原点的小数带入 screenX/Y。
+
+## 性能恢复后的追加对照
+
+性能优化已在内核 main `9991779`；应用发布锁固定该提交。上述第 5 项输入修正在
+`fix/perimeterx-browser-compat`，尚未提升为发布内核。先前的性能实验不是 PerimeterX
+通过证据，以下在线结果也不能用于比较两个出口的延迟。
+
+| 内核与入口 | 结果 |
+| --- | --- |
+| 性能恢复后、输入精度修正前，代理第 4 条 | 28.319 秒，正常释放后服务端状态 -1 |
+| 输入精度修正后，NopeCHA、代理第 4 条 | 65.243 秒，运行时读取超时，没有发送输入 |
+| 输入精度修正后，直接 Walmart、代理第 4 条 | 70.078 秒，captcha.js 请求超时，没有发送输入 |
+| 输入精度修正后，直接 Walmart、直连、数值回调观察 | 15.827 秒，按住约 5.9 秒，进度完成后释放；服务端状态 -1、显示重试，无脚本异常 |
+| 完整 Firefox 159、直接 Walmart、同一代理、数值回调观察 | 24.258 秒，按住约 5.5 秒，进度完成后释放；服务端状态 -1，仍在 blocked 页 |
+
+最后一次的回调只记录数值状态，并将原始参数原样转发；它是插桩诊断，verified 仍为
+false。两个加载失败的代理样本保持 error/unconfirmed，没有归为挑战拒绝。
+日志另有 about:blank 资源失败；离线最小用例确认空白 iframe 正常 load 且没有网络
+请求，图片以 about:blank 为 src 则触发 error 并产生同样的日志。该日志不足以指向
+iframe 导航缺陷，本轮没有据此修改网络层。详细证据留在忽略的 artifacts 目录。
+
+参考 Firefox 的回调会延后安装；只在按下前查找回调会漏记结果。参考工具改为释放后
+继续等待回调出现，只持久保存有上限的数值状态，然后原样转发回调。修正观察方式后
+明确读到 -1。此前几次未装上观察器的参考运行均未计为通过或明确拒绝。这次参考使用
+headless 与原生自动化协议，navigator.webdriver 为 true；没有证明普通人工浏览器
+也会失败，不能把失败唯一归因于代理 IP。
+
+同一个 `b513abc` 兼容内核另做了 Cloudflare 回归：Python SDK 在 3.410 秒取得长度
+624 的非 dummy token，CapSkip 原站后台 HTTP 200、verified/server/success 均为真，
+hostname=capskip.com。这个结果只用于检验既有求解路径没有被输入修改破坏。
+本轮脱敏摘要与二进制散列见 [坐标追加对照 JSON](perimeterx-coordinate-followup-20261107.json)。
 
 ## 实测结果
 

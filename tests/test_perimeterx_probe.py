@@ -26,6 +26,12 @@ except (ImportError, OSError, FileNotFoundError, RuntimeUnavailable):
 
 
 class PerimeterXUrlTests(unittest.TestCase):
+    def test_fractional_frame_origin_does_not_make_screen_coordinates_fractional(self):
+        point=probe.input_point({'x':0,'y':0,'width':240,'height':90},[32.25,267.4])
+        self.assertEqual([point['screenX'],point['screenY']],[152,312])
+        self.assertAlmostEqual(point['clientX'],119.75)
+        self.assertAlmostEqual(point['clientY'],44.6)
+
     def test_public_urls_remove_credentials_and_challenge_queries(self):
         self.assertEqual(probe.public_url("https://user:secret@example.test:8443/path?token=secret#secret"),
                          "https://example.test:8443/path")

@@ -1,0 +1,106 @@
+{
+  "kernel_commit": "b513abcca03e9d33affc572427c202169afa567f",
+  "kernel_branch": "fix/perimeterx-browser-compat",
+  "shell_sha256": "5807a99c065af2640fcb7fe2b0453474873cad5ad64f4eea689952e3bb8a0409",
+  "release_kernel_commit": "9991779d024fb4c29c1f1f6f5f33e2129aa3b628",
+  "profile_sha256": "6270f76a3ed9c12a10804946ba9c74aaf5838d1e877cafd66a99e15f2717764a",
+  "perimeterx_verified": false,
+  "validation": {
+    "firefox_159_constructor_cases": 27,
+    "constructor_matches": 27,
+    "realms": ["top", "iframe"],
+    "native_tests": 37,
+    "native_skips": 0,
+    "smoke": "passed",
+    "application_tests": 55,
+    "application_skips": 0
+  },
+  "cases": [
+    {
+      "evidence": "performance-proxy04.json",
+      "kernel_commit": "9991779d024fb4c29c1f1f6f5f33e2129aa3b628",
+      "proxy_index": 4,
+      "instrumented": true,
+      "elapsed": 28.319,
+      "outcome": "rejected",
+      "verified": false,
+      "server_results": [{"status": -1}],
+      "down_at": 15.323,
+      "up_at": 24.219
+    },
+    {
+      "evidence": "coordinates-clean.json",
+      "proxy_index": 4,
+      "instrumented": false,
+      "elapsed": 65.243,
+      "outcome": "error",
+      "verified": false,
+      "error": "TimeoutError: ruyijs read timed out",
+      "input_events": 0
+    },
+    {
+      "evidence": "coordinates-server-result.json",
+      "proxy_index": 4,
+      "instrumented": true,
+      "elapsed": 70.078,
+      "outcome": "unconfirmed",
+      "verified": false,
+      "server_results": [],
+      "input_events": 0,
+      "failed_request": "captcha.js: Request deadline elapsed"
+    },
+    {
+      "evidence": "coordinates-direct-result.json",
+      "proxy": false,
+      "instrumented": true,
+      "elapsed": 15.827,
+      "outcome": "rejected",
+      "verified": false,
+      "server_results": [{"status": -1}],
+      "down_at": 6.604,
+      "up_at": 12.482,
+      "client_completed_at": 12.458,
+      "script_errors": 0
+    }
+  ],
+  "reference_control": {
+    "evidence": "reference-server-result.json",
+    "browser": "Firefox 159",
+    "headless": true,
+    "webdriver": true,
+    "timezone": "America/New_York",
+    "proxy_index": 4,
+    "instrumented": true,
+    "persistent_observer_installed": true,
+    "elapsed": 24.258,
+    "outcome": "rejected",
+    "verified": false,
+    "server_results": [{"status": -1}],
+    "down_at": 17.501,
+    "up_at": 23.01,
+    "client_completed_at": 22.986,
+    "final_path": "/blocked",
+    "limitation": "An automated browser reference does not establish whether an ordinary manual browser would pass."
+  },
+  "cloudflare_control": {
+    "evidence": "coordinates-capskip-regression.json",
+    "mode": "python_sdk",
+    "token_elapsed": 3.41,
+    "token_length": 624,
+    "dummy_token": false,
+    "backend": {
+      "accepted": true,
+      "http_status": 200,
+      "hostname": "capskip.com",
+      "verified": true,
+      "server": true,
+      "success": "true"
+    }
+  },
+  "blank_resource_control": {
+    "explicit_about_blank_iframe": {"load": true, "error": false, "network_requests": 0},
+    "initial_blank_iframe": {"load": true, "error": false, "network_requests": 0},
+    "about_blank_image": {"load": false, "error": true, "network_requests": 1},
+    "limitation": "The live log alone does not identify its resource initiator. No network behavior was changed."
+  }
+}

@@ -117,6 +117,14 @@ def public_url(url):
     return urlunsplit((parsed.scheme, authority, parsed.path, '', ''))
 
 
+def input_point(rect, origin):
+    """Align a screen point before deriving the frame-local pointer position."""
+    screen_x=math.floor(origin[0]+rect['x']+rect['width']/2+0.5)
+    screen_y=math.floor(origin[1]+rect['y']+rect['height']/2+0.5)
+    return {'clientX':screen_x-origin[0], 'clientY':screen_y-origin[1],
+            'screenX':screen_x, 'screenY':screen_y}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--url', default='https://nopecha.com/captcha/perimeterx')
@@ -235,10 +243,9 @@ def main():
                         context.eval('globalThis.__ruyiHeldTarget=globalThis.__ruyiPxCandidates.hold;true')
                         held['path']='globalThis.__ruyiHeldTarget'
                         rect=held['rect']
-                        init={'clientX':round(rect['x']+rect['width']/2),'clientY':round(rect['y']+rect['height']/2),
-                              'button':0,'buttons':0,'bubbles':True,'composed':True,'cancelable':True,'detail':1}
                         screen=context.eval('(()=>{const w=('+held['path']+').ownerDocument.defaultView;return [w.mozInnerScreenX,w.mozInnerScreenY]})()')
-                        init.update(screenX=screen[0]+init['clientX'],screenY=screen[1]+init['clientY'])
+                        init={**input_point(rect,screen),'button':0,'buttons':0,'bubbles':True,
+                              'composed':True,'cancelable':True,'detail':1}
                         pointer={'pointerId':0,'pointerType':'mouse','isPrimary':True,'width':1,'height':1}
                         for event in ('pointerover','pointerenter','mouseover','mouseenter','pointermove','mousemove','pointerdown','mousedown'):
                             fields={**init,**(pointer if event.startswith('pointer') else {})}
