@@ -1,5 +1,6 @@
 """Inspect a live PerimeterX page using ff-ruyijs; a loaded widget is not success."""
 import argparse
+import hashlib
 import json
 import math
 import os
@@ -84,6 +85,26 @@ TARGET_STATE = r'''(() => {
  return {aria:Element.prototype.getAttribute.call(target,'aria-label'),
    connected:Object.getOwnPropertyDescriptor(Node.prototype,'isConnected').get.call(target)};
 })()'''
+OBSERVE_SERVER_RESULT = r'''(win => {
+ const app=win._pxAppId;
+ if(typeof app!=='string')return false;
+ const handler=win['_'+app.replace(/px|PX/,'')+'handler'];
+ if(!handler || typeof handler.PX764!=='function')return false;
+ const observed=globalThis.__ruyiPxObservedHandlers ||= new WeakSet();
+ const results=globalThis.__ruyiPxServerResults ||= [];
+ if(observed.has(handler))return true;
+ const original=handler.PX764;
+ handler.PX764=function(status,...args){
+   // Store only a bounded numeric status, never the cookie/token arguments.
+   const value=typeof status==='number'?status:
+     typeof status==='string' && /^-?\d{1,4}$/.test(status)?Number(status):NaN;
+   if(Number.isInteger(value) && Math.abs(value)<=9999 && results.length<64)
+     results.push({status:value});
+   return Reflect.apply(original,this,[status,...args]);
+ };
+ observed.add(handler);
+ return true;
+})'''
 
 
 def public_url(url):
@@ -100,7 +121,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--url', default='https://nopecha.com/captcha/perimeterx')
     parser.add_argument('--timeout', type=float, default=30)
-    parser.add_argument('--profile', choices=('linux','default'), default='linux')
+    profile_source=parser.add_mutually_exclusive_group()
+    profile_source.add_argument('--profile', choices=('linux','default'), default='linux')
+    profile_source.add_argument('--profile-file', type=Path, help='Use an explicit generated fingerprint profile')
     parser.add_argument('--shell', type=Path)
     proxy_source=parser.add_mutually_exclusive_group()
     proxy_source.add_argument('--proxy-env', metavar='NAME', help='Read the proxy URL from an environment variable; report only whether a proxy was used')
@@ -110,6 +133,8 @@ def main():
     parser.add_argument('--hold', type=float, default=0, help='Send trusted down/up with the event loop running between them')
     parser.add_argument('--until-complete', action='store_true', help='Release when the widget asks to wait; --hold is the maximum duration')
     parser.add_argument('--accessible', action='store_true', help='Use the displayed two-click accessibility flow')
+    parser.add_argument('--observe-server-result', action='store_true',
+                        help='Instrument the PX764 result callback, forwarding it unchanged; diagnostic results are not clean acceptance evidence')
     parser.add_argument('--wait', type=float, default=0, help='Wait this many seconds after the widget appears before interacting')
     parser.add_argument('--check-walmart', action='store_true', help='After interacting, fetch the Walmart homepage in the same session and record its HTTP status/title')
     parser.add_argument('--output', type=Path, default=Path('artifacts/perimeterx/probe.json'))
@@ -135,12 +160,16 @@ def main():
         address=urlsplit(proxy)
         proxy=urlunsplit(('http',address.netloc,address.path,address.query,address.fragment))
     bindings = load_bindings()
-    report = {'url':public_url(args.url),'profile':args.profile,'proxy':bool(proxy),'verified':False,
+    profile=json.loads(args.profile_file.read_text()) if args.profile_file else _linux_profile() if args.profile=='linux' else None
+    if profile is not None and not isinstance(profile,dict):parser.error('profile file must contain a JSON object')
+    report = {'url':public_url(args.url),'profile':'file' if args.profile_file else args.profile,'proxy':bool(proxy),'verified':False,
               'outcome':'unconfirmed','errors':[],'states':[],'input':[],'progress':[]}
+    if args.observe_server_result:report['instrumented']=True
+    if args.profile_file:report['profile_sha256']=hashlib.sha256(args.profile_file.read_bytes()).hexdigest()
     started=monotonic()
     with bindings.Context(shell=args.shell,timeout=30,proxy=proxy,tls='159') as context:
         context.configure_clock('system')
-        if args.profile=='linux':context.configure_fingerprint(_linux_profile())
+        if profile is not None:context.configure_fingerprint(profile)
         context.navigate(args.url)
         last=None
         held=None
@@ -169,6 +198,8 @@ def main():
                     for root in state['roots']:
                         if root['type']==9 and any(e.get('id')=='px-captcha' for e in root['elements']):
                             backend_window='('+root['path']+').defaultView'
+                            if args.observe_server_result:
+                                context.eval(OBSERVE_SERVER_RESULT+'('+backend_window+')')
                     for document in state['documents']:
                         document['url']=public_url(document['url'])
                         document['scripts']=[public_url(url) for url in document['scripts']]
@@ -237,6 +268,8 @@ def main():
             report['outcome']='error'
             report['error']=f'{type(error).__name__}: {error}'
         if not context.closed:
+            if args.observe_server_result:
+                report['server_results']=json.loads(context.eval('JSON.stringify(globalThis.__ruyiPxServerResults||[])'))
             if args.check_walmart:
                 context.timeout=20
                 try:

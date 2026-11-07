@@ -1,0 +1,261 @@
+{
+  "kernel_commit": "9b46ad4474b5b3e03bfaf02f53c362cd93628f95",
+  "shell_sha256": "70a41fd67d2dcf23e577fe36d617da11baa6cca98e819b4f12bd920f1ec3a594",
+  "proxy_index": 3,
+  "proxy_mode": "local CONNECT adapter to raw SOCKS5, target TLS kept in Necko",
+  "profiles": {
+    "us_sha256": "6270f76a3ed9c12a10804946ba9c74aaf5838d1e877cafd66a99e15f2717764a",
+    "asia_sha256": "4c40827e8c0d1a46ca3dd3d5bc5183ab38ee35ddd7981ab3fa5fab5ae5f89057",
+    "generator": {
+      "os": "linux",
+      "seed": 42,
+      "locale": "en-US",
+      "hardware_concurrency": 8
+    },
+    "timezone_control": [
+      "America/New_York",
+      "Asia/Shanghai"
+    ]
+  },
+  "perimeterx_verified": false,
+  "cases": [
+    {
+      "evidence": "inheritance-us-clean.json",
+      "elapsed": 25.769,
+      "outcome": "rejected",
+      "verified": false,
+      "input": [
+        {
+          "event": "down",
+          "elapsed": 14.764
+        },
+        {
+          "event": "up",
+          "elapsed": 21.267
+        }
+      ],
+      "progress": [
+        {
+          "elapsed": 14.888,
+          "state": {
+            "aria": "Press & Hold Human Challenge",
+            "connected": true
+          }
+        },
+        {
+          "elapsed": 21.249,
+          "state": {
+            "aria": "Human Challenge completed, please wait",
+            "connected": true
+          }
+        }
+      ],
+      "errors": 0,
+      "instrumented": false
+    },
+    {
+      "evidence": "inheritance-asia-clean.json",
+      "elapsed": 37.399,
+      "outcome": "rejected",
+      "verified": false,
+      "input": [
+        {
+          "event": "down",
+          "elapsed": 21.664
+        },
+        {
+          "event": "up",
+          "elapsed": 32.799
+        }
+      ],
+      "progress": [
+        {
+          "elapsed": 21.801,
+          "state": {
+            "aria": "Press & Hold Human Challenge",
+            "connected": true
+          }
+        },
+        {
+          "elapsed": 32.779,
+          "state": {
+            "aria": "Human Challenge completed, please wait",
+            "connected": true
+          }
+        }
+      ],
+      "errors": 0,
+      "instrumented": false
+    },
+    {
+      "evidence": "inheritance-motion-clean.json",
+      "elapsed": 45.196,
+      "outcome": "unconfirmed",
+      "verified": false,
+      "input": [
+        {
+          "event": "down",
+          "elapsed": 35.996
+        }
+      ],
+      "progress": [
+        {
+          "elapsed": 36.958,
+          "state": {
+            "aria": "Press & Hold Human Challenge",
+            "connected": true
+          }
+        }
+      ],
+      "errors": 0,
+      "instrumented": false
+    },
+    {
+      "evidence": "inheritance-motion-complete.json",
+      "elapsed": 27.226,
+      "outcome": "rejected",
+      "verified": false,
+      "input": [
+        {
+          "event": "down",
+          "elapsed": 18.272
+        },
+        {
+          "event": "up",
+          "elapsed": 22.465
+        }
+      ],
+      "progress": [
+        {
+          "elapsed": 19.305,
+          "state": {
+            "aria": "Press & Hold Human Challenge",
+            "connected": true
+          }
+        },
+        {
+          "elapsed": 22.447,
+          "state": {
+            "aria": "Human Challenge completed, please wait",
+            "connected": true
+          }
+        }
+      ],
+      "errors": 0,
+      "instrumented": false
+    },
+    {
+      "evidence": "inheritance-accessible-clean.json",
+      "elapsed": 28.418,
+      "outcome": "rejected",
+      "verified": false,
+      "input": [
+        {
+          "event": "accessible_start",
+          "elapsed": 13.45
+        },
+        {
+          "event": "accessible_confirm",
+          "elapsed": 23.706
+        }
+      ],
+      "progress": [],
+      "errors": 0,
+      "instrumented": false
+    },
+    {
+      "evidence": "inheritance-server-observer.json",
+      "elapsed": 30.427,
+      "outcome": "rejected",
+      "verified": false,
+      "input": [
+        {
+          "event": "down",
+          "elapsed": 14.617
+        },
+        {
+          "event": "up",
+          "elapsed": 26.024
+        }
+      ],
+      "progress": [
+        {
+          "elapsed": 14.778,
+          "state": {
+            "aria": "Press & Hold Human Challenge",
+            "connected": true
+          }
+        },
+        {
+          "elapsed": 26.003,
+          "state": {
+            "aria": "Human Challenge completed, please wait",
+            "connected": true
+          }
+        }
+      ],
+      "errors": 0,
+      "instrumented": true,
+      "server_results": [
+        {
+          "status": -1
+        }
+      ]
+    }
+  ],
+  "surface_comparison": {
+    "properties": 318,
+    "reference": "Firefox 159 in a secure context",
+    "probe": "presence, typeof, truthiness; incomplete browser compatibility comparison",
+    "differences": [
+      {
+        "owner": "window",
+        "name": "mozInnerScreenX",
+        "reference": {
+          "present": true,
+          "type": "number",
+          "truthy": false
+        },
+        "native": {
+          "present": true,
+          "type": "number",
+          "truthy": true
+        }
+      },
+      {
+        "owner": "document",
+        "name": "selectedStyleSheetSet",
+        "reference": {
+          "present": true,
+          "type": "object",
+          "truthy": false
+        },
+        "native": {
+          "present": true,
+          "type": "string",
+          "truthy": false
+        }
+      }
+    ]
+  },
+  "cloudflare_control": {
+    "token_length": 645,
+    "dummy_token": false,
+    "elapsed": 4.508,
+    "backend": {
+      "accepted": true,
+      "http_status": 200,
+      "hostname": "capskip.com",
+      "verified": true,
+      "server": true,
+      "success": "true"
+    },
+    "kernel": "9b46ad4",
+    "profile_seed": 42
+  },
+  "validation": {
+    "native_tests": 15,
+    "smoke": "passed",
+    "application_tests": 54
+  }
+}

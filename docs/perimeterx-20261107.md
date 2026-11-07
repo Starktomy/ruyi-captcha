@@ -1,6 +1,6 @@
 # 2026-11-07：PerimeterX 排查与真实验证
 
-**ff-ruyijs 尚未通过这个挑战。** 已修复三个可独立复现的浏览器兼容问题，完善诊断工具，
+**ff-ruyijs 尚未通过这个挑战。** 已修复四个可独立复现的浏览器兼容问题，完善诊断工具，
 并使用用户提供的代理做了真实对照；PerimeterX 仍未注册为 SDK/API 支持类型。
 
 NopeCHA 的页面 `https://nopecha.com/captcha/perimeterx` 嵌入
@@ -20,9 +20,15 @@ NopeCHA 的页面 `https://nopecha.com/captcha/perimeterx` 嵌入
    现在通过布局所有者投影 iframe 内容框，计算嵌套位置、边框、内边距、滚动和变换，
    隐藏祖先下的 frame 返回 0。可信输入使用同一个屏幕原点。
 
-三个问题均先在不访问网络的最小用例中复现，再修复。12 项原生测试和 smoke 检查通过；
-应用 47 项测试通过。最终内核的 Turnstile 回归获得真实 token，并被 CapSkip 后端接受，
-用时约 4.9 秒。这个回归不代表 PerimeterX 通过。
+4. 新 iframe 没有继承配置中的 WebGL 等 owner group：Linux 父页面显示 llvmpipe，
+   子页面却恢复 Windows ANGLE 默认值。恢复旧 `bb58104` 的通用继承逻辑，
+   在目标 realm 包装配置对象，继续让原生实例和文档状态相互独立。新提交
+   [`9b46ad4`](https://github.com/Starktomy/ff-ruyijs/commit/9b46ad4) 覆盖嵌套 frame、
+   跨域导航、srcdoc、顶层文档替换及 GC。
+
+四个问题均先在不访问网络的最小用例中复现，再修复。最新 15 项原生测试和 smoke
+检查通过；应用 54 项测试通过。新生成的美国语言／时区 profile 在最新内核上取得
+真实 Turnstile token，约 4.5 秒，并被 CapSkip 后端接受。这个回归不代表 PerimeterX 通过。
 
 ## 实测结果
 
@@ -37,6 +43,29 @@ NopeCHA 的页面 `https://nopecha.com/captcha/perimeterx` 嵌入
 | 代理第 2 条 | 挑战脚本请求超时，没有向按钮发送输入 | 未验证，不能算挑战拒绝或通过 |
 | 代理第 3 条，直接 Walmart，最终内核 | 延迟点击，按住约 6.4 秒，完成后释放 | 明确重试；40.1 秒 |
 | 代理第 3 条，校准全部输入标志后 | 按住约 2.9 秒，按完成提示释放 | 明确重试；33.3 秒；主页仍可返回 200 |
+| 代理第 3 条，继承修复＋生成的美国 profile | 正常完成，按住约 6.5 秒 | 明确重试；25.8 秒 |
+| 相同生成 profile，仅将时区改为上海 | 正常完成，按住约 11.1 秒 | 明确重试；37.4 秒 |
+| 继承修复＋美国 profile，增加连续鼠标移动 | 正常完成，按住约 4.2 秒 | 明确重试；27.2 秒 |
+| 继承修复＋美国 profile，无障碍两次点击 | 完成页面规定的两次点击 | 明确重试；28.4 秒 |
+
+美国／上海对照是同一条原始 SOCKS 会话凭据，各新建 Context；没有记录公开 IP。
+单次样本不能证明出口在整个期间没有变化，也不足以比较时区对成功率的影响。
+另一次连续移动运行在控件加载较晚时耗尽预算，只有 down、没有完成释放；该次保持
+`unconfirmed`，没有计成明确拒绝。
+
+额外插桩运行现在读到真实 collector 命令 `oIIIoooI` 携带数值状态 **`-1`**。
+公开脚本将其送入 `PX764`，解析为状态后进入失败路径；其成功路径要求状态 `0`。
+这确认了该次是服务端拒绝，不能仅解释为扫描器没看到成功 UI。没有保存命令中的
+Cookie 或 token 参数，也没有改写服务端结果。新工具选项 `--observe-server-result`
+可只包装并转发该回调，记录有上限的数值状态；报告会标记 `instrumented: true`，
+即使观察到 `0` 也不会自动宣称干净环境验收成功。保留的新观察器在 live 运行中
+同样得到 `server_results: [{"status": -1}]`，30.4 秒后显示重试，没有脚本异常。
+
+还从公开采集脚本提取了它检查的 318 个 Window／Document／Navigator／Location
+属性，在同为安全上下文的 ff-ruyijs 与完整 Firefox 159 中比较存在性、类型及真假值。
+只有两处差异：窗口 `mozInnerScreenX` 的零／非零（窗口位置不同），以及
+`selectedStyleSheetSet` 的 null／空字符串。这不是完整的浏览器一致性测试，页面
+样式表也未完全统一，后者尚未确认是本挑战的原因；不能由此证明指纹已通过。
 
 原始 SOCKS5 连通性检查中，同一会话的两个独立连接得到相同出口；首次 HTTP CONNECT
 检查曾观察到不同出口，所以随后对照使用原始 SOCKS5。测试用本地 CONNECT 适配器
@@ -99,6 +128,16 @@ HTTP CONNECT，以下命令显式切换协议；不要对仅支持 SOCKS 的代�
 ```
 
 `--check-walmart` 只记录同会话请求的状态、标题和是否返回 blocked；它不提升 verified。
+生成器对照可先运行以下命令，再把 `--profile-file` 传给上述探针；增加
+`--observe-server-result` 时会将结果标记为插桩诊断：
+
+```sh
+.venv/bin/ruyi-captcha profile --os linux --seed 42 --locale en-US \
+  --timezone America/New_York --cpu 8 --output artifacts/perimeterx/generated-us.json
+```
+
+本轮脱敏汇总与原生二进制散列见
+[profile follow-up](perimeterx-profile-followup-20261107.json)。
 代理凭据不进入报告；URL 查询与用户信息、Cookie 值和 iframe token 属性均被移除。
 详细本地证据在忽略目录 `artifacts/perimeterx/`，其中 `final-press.json`、
 `final-accessible.json`、`socks-01.json`、`socks-03-direct.json` 和参考浏览器截图可复核

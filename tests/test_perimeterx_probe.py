@@ -41,10 +41,15 @@ class PerimeterXProbeTests(unittest.TestCase):
         class OfflineContext(bindings.Context):
             def navigate(self,url):
                 self.put_resource('https://probe.test/child', '''<!doctype html>
-                    <div role="button" aria-label="Press & Hold Human Challenge"
+                    <div id="px-captcha" role="button" aria-label="Press & Hold Human Challenge"
                         style="width:200px;height:80px">Press &amp; Hold</div><p role="alert"></p>
                     <script>
                     globalThis.events=[];
+                    globalThis._pxAppId='PXfixture';
+                    globalThis._fixturehandler={PX764(status,token){
+                        if(status!==-1 || token!=='offline-observer-secret')throw new Error('callback arguments changed');
+                        document.querySelector('p').textContent='Please try again';
+                    }};
                     const b=document.querySelector('div');
                     for(const type of ['pointerover','pointerenter','mouseover','mouseenter',
                         'pointermove','mousemove','pointerdown','mousedown','pointerup','mouseup','click'])
@@ -52,7 +57,7 @@ class PerimeterXProbeTests(unittest.TestCase):
                             e.cancelable,e.isTrusted,e.view===window]));
                     b.addEventListener('pointerdown',()=>setTimeout(()=>
                         b.setAttribute('aria-label','Human Challenge completed, please wait'),80));
-                    b.addEventListener('mouseup',()=>document.querySelector('p').textContent='Please try again');
+                    b.addEventListener('mouseup',()=>_fixturehandler.PX764(-1,'offline-observer-secret'));
                     </script>''')
                 self.load_page(url,'<!doctype html><iframe src="https://probe.test/child"></iframe>')
             def close(self):
@@ -62,7 +67,7 @@ class PerimeterXProbeTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             output=Path(folder)/'report.json'
             argv=['probe','--url','https://probe.test/','--hold','1','--until-complete',
-                  '--timeout','3','--output',str(output)]
+                  '--observe-server-result','--timeout','3','--output',str(output)]
             with patch.object(probe,'load_bindings',return_value=SimpleNamespace(
                     Context=OfflineContext,JSError=bindings.JSError)),patch.object(sys,'argv',argv),redirect_stdout(io.StringIO()):
                 probe.main()
@@ -75,6 +80,9 @@ class PerimeterXProbeTests(unittest.TestCase):
         self.assertEqual(captured,[row+[True,True] for row in expected])
         self.assertEqual(report['outcome'],'rejected')
         self.assertFalse(report['verified'])
+        self.assertTrue(report['instrumented'])
+        self.assertEqual(report['server_results'],[{'status':-1}])
+        self.assertNotIn('offline-observer-secret',json.dumps(report))
         self.assertEqual([row['event'] for row in report['input']],['down','up'])
 
     def test_closed_frame_scan_avoids_page_hooks_and_redacts_secrets(self):
