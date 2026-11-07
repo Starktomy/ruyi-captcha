@@ -1,0 +1,1366 @@
+{
+  "started_at": "2026-11-07T10:34:49.394825+00:00",
+  "variants": [
+    {
+      "name": "new_minimal",
+      "shell": "/root/ff-ruyijs/dist/js",
+      "helper": "/root/ff-ruyijs/vendor/necko-derived/python/bin/python3",
+      "shell_sha256": "66d41abd93a1cddfd4e4d1bed62321cef9058030a4cf26a0716d027804443bca"
+    },
+    {
+      "name": "old_full",
+      "shell": "/root/ff-ruyijs/artifacts/minimal-cloudflare-20261107/full-fork-js",
+      "helper": "/root/ff-ruyijs/artifacts/minimal-cloudflare-20261107/full-fork-necko-derived/python/bin/python3",
+      "shell_sha256": "dc45c3ed9165f962eeb3a4cac046459fd90ed9c73a8f2f95ab44b5218679ac54"
+    },
+    {
+      "name": "old_full_new_helper",
+      "shell": "/root/ff-ruyijs/artifacts/minimal-cloudflare-20261107/full-fork-js",
+      "helper": "/root/ff-ruyijs/vendor/necko-derived/python/bin/python3",
+      "shell_sha256": "dc45c3ed9165f962eeb3a4cac046459fd90ed9c73a8f2f95ab44b5218679ac54"
+    }
+  ],
+  "machine": {
+    "platform": "Linux-7.0.0-38-generic-x86_64-with-glibc2.43",
+    "affinity_cpus": 5,
+    "logical_cpus": 5,
+    "cpu_model": "AMD EPYC 7643 48-Core Processor"
+  },
+  "method": {
+    "profile": "same linux Firefox 159",
+    "driver": "same ruyi-captcha provider and Python bindings",
+    "measurement": "after imports and capability preflight; fresh Contexts; startup and cleanup included",
+    "cpu": "isolated cgroup cpu.stat; Python caller, runtime, workers and helpers; sampler excluded",
+    "memory": "simultaneous tree PSS/RSS sampled every 50ms, caller included",
+    "backend_verification": false,
+    "attempts": 1,
+    "timeout": 30,
+    "concurrency": [
+      1,
+      2,
+      4
+    ],
+    "repetitions": 3,
+    "order": "rotating and alternating variant order; sequential batches; one warmup per variant",
+    "verification_note": "Token acquisition only in resource batches; backend acceptance separately verified in live_capskip.py.",
+    "controlled_repeat": "Formal complete rerun, without local builds or test suites running concurrently; prior exploratory run retained separately."
+  },
+  "warmups": [
+    {
+      "variant": "new_minimal",
+      "concurrency": 1,
+      "repetition": 0,
+      "driver_idle_pss_mib": 18.2880859375,
+      "peak_tree_pss_mib": 442.8740234375,
+      "peak_tree_rss_mib": 686.2109375,
+      "peak_tree_private_mib": 394.09375,
+      "peak_processes": 6,
+      "samples": 88,
+      "sampler_cpu_seconds": 1.093333042,
+      "remaining_processes": 0,
+      "cpu_seconds": 5.176687,
+      "cpu_user_seconds": 4.522182,
+      "cpu_system_seconds": 0.654505,
+      "wall_seconds": 4.389125632005744,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 4.384609806002118,
+          "token_length": 624,
+          "attempts": 1
+        }
+      ],
+      "successes": 1,
+      "cpu_seconds_per_call": 5.176687,
+      "average_cpu_cores": 1.1794346833572764
+    },
+    {
+      "variant": "old_full",
+      "concurrency": 1,
+      "repetition": 0,
+      "driver_idle_pss_mib": 18.3173828125,
+      "peak_tree_pss_mib": 321.39453125,
+      "peak_tree_rss_mib": 463.40234375,
+      "peak_tree_private_mib": 284.61328125,
+      "peak_processes": 6,
+      "samples": 71,
+      "sampler_cpu_seconds": 0.6600904890000001,
+      "remaining_processes": 0,
+      "cpu_seconds": 4.355447,
+      "cpu_user_seconds": 3.847224,
+      "cpu_system_seconds": 0.508223,
+      "wall_seconds": 3.5201110609341413,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 3.515421978896484,
+          "token_length": 645,
+          "attempts": 1
+        }
+      ],
+      "successes": 1,
+      "cpu_seconds_per_call": 4.355447,
+      "average_cpu_cores": 1.2373038590561354
+    },
+    {
+      "variant": "old_full_new_helper",
+      "concurrency": 1,
+      "repetition": 0,
+      "driver_idle_pss_mib": 18.2822265625,
+      "peak_tree_pss_mib": 346.7841796875,
+      "peak_tree_rss_mib": 463.8671875,
+      "peak_tree_private_mib": 318.86328125,
+      "peak_processes": 6,
+      "samples": 65,
+      "sampler_cpu_seconds": 0.6663047419999999,
+      "remaining_processes": 0,
+      "cpu_seconds": 4.160652,
+      "cpu_user_seconds": 3.736657,
+      "cpu_system_seconds": 0.423994,
+      "wall_seconds": 3.201826293952763,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 3.1973286810098216,
+          "token_length": 645,
+          "attempts": 1
+        }
+      ],
+      "successes": 1,
+      "cpu_seconds_per_call": 4.160652,
+      "average_cpu_cores": 1.2994621250559892
+    }
+  ],
+  "runs": [
+    {
+      "variant": "new_minimal",
+      "concurrency": 1,
+      "repetition": 1,
+      "driver_idle_pss_mib": 18.3369140625,
+      "peak_tree_pss_mib": 460.8896484375,
+      "peak_tree_rss_mib": 661.35546875,
+      "peak_tree_private_mib": 424.8515625,
+      "peak_processes": 6,
+      "samples": 89,
+      "sampler_cpu_seconds": 0.9520467399999997,
+      "remaining_processes": 0,
+      "cpu_seconds": 4.801332,
+      "cpu_user_seconds": 4.278514,
+      "cpu_system_seconds": 0.522817,
+      "wall_seconds": 4.411124010919593,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 4.406060946988873,
+          "token_length": 624,
+          "attempts": 1
+        }
+      ],
+      "successes": 1,
+      "cpu_seconds_per_call": 4.801332,
+      "average_cpu_cores": 1.0884599907221968
+    },
+    {
+      "variant": "old_full",
+      "concurrency": 1,
+      "repetition": 1,
+      "driver_idle_pss_mib": 18.2578125,
+      "peak_tree_pss_mib": 368.1162109375,
+      "peak_tree_rss_mib": 485.1328125,
+      "peak_tree_private_mib": 341.984375,
+      "peak_processes": 6,
+      "samples": 75,
+      "sampler_cpu_seconds": 0.8308917229999997,
+      "remaining_processes": 0,
+      "cpu_seconds": 4.661318,
+      "cpu_user_seconds": 4.188003,
+      "cpu_system_seconds": 0.473314,
+      "wall_seconds": 3.6950588129693642,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 3.6901333179557696,
+          "token_length": 624,
+          "attempts": 1
+        }
+      ],
+      "successes": 1,
+      "cpu_seconds_per_call": 4.661318,
+      "average_cpu_cores": 1.2615003538344618
+    },
+    {
+      "variant": "old_full_new_helper",
+      "concurrency": 1,
+      "repetition": 1,
+      "driver_idle_pss_mib": 18.23046875,
+      "peak_tree_pss_mib": 329.8896484375,
+      "peak_tree_rss_mib": 434.82421875,
+      "peak_tree_private_mib": 304.9765625,
+      "peak_processes": 7,
+      "samples": 67,
+      "sampler_cpu_seconds": 0.6638079029999995,
+      "remaining_processes": 0,
+      "cpu_seconds": 4.126808,
+      "cpu_user_seconds": 3.640991,
+      "cpu_system_seconds": 0.485816,
+      "wall_seconds": 3.3250831119949,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 3.320634020958096,
+          "token_length": 645,
+          "attempts": 1
+        }
+      ],
+      "successes": 1,
+      "cpu_seconds_per_call": 4.126808,
+      "average_cpu_cores": 1.2411142401562711
+    },
+    {
+      "variant": "new_minimal",
+      "concurrency": 2,
+      "repetition": 1,
+      "driver_idle_pss_mib": 18.228515625,
+      "peak_tree_pss_mib": 838.1708984375,
+      "peak_tree_rss_mib": 1348.2109375,
+      "peak_tree_private_mib": 743.72265625,
+      "peak_processes": 10,
+      "samples": 92,
+      "sampler_cpu_seconds": 1.7115554370000003,
+      "remaining_processes": 0,
+      "cpu_seconds": 10.015034,
+      "cpu_user_seconds": 8.795721,
+      "cpu_system_seconds": 1.219313,
+      "wall_seconds": 4.582387069938704,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 4.32358155597467,
+          "token_length": 624,
+          "attempts": 1
+        },
+        {
+          "index": 1,
+          "success": true,
+          "elapsed": 4.5743616870604455,
+          "token_length": 645,
+          "attempts": 1
+        }
+      ],
+      "successes": 2,
+      "cpu_seconds_per_call": 5.007517,
+      "average_cpu_cores": 2.1855495502988935
+    },
+    {
+      "variant": "old_full_new_helper",
+      "concurrency": 2,
+      "repetition": 1,
+      "driver_idle_pss_mib": 18.3056640625,
+      "peak_tree_pss_mib": 590.85546875,
+      "peak_tree_rss_mib": 839.8046875,
+      "peak_tree_private_mib": 529.25,
+      "peak_processes": 10,
+      "samples": 67,
+      "sampler_cpu_seconds": 1.073916047,
+      "remaining_processes": 0,
+      "cpu_seconds": 7.636883,
+      "cpu_user_seconds": 6.767778,
+      "cpu_system_seconds": 0.869104,
+      "wall_seconds": 3.304975826991722,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 3.248671292909421,
+          "token_length": 645,
+          "attempts": 1
+        },
+        {
+          "index": 1,
+          "success": true,
+          "elapsed": 3.2960930439876392,
+          "token_length": 624,
+          "attempts": 1
+        }
+      ],
+      "successes": 2,
+      "cpu_seconds_per_call": 3.8184415,
+      "average_cpu_cores": 2.3107228009444465
+    },
+    {
+      "variant": "old_full",
+      "concurrency": 2,
+      "repetition": 1,
+      "driver_idle_pss_mib": 18.2421875,
+      "peak_tree_pss_mib": 617.9892578125,
+      "peak_tree_rss_mib": 889.05859375,
+      "peak_tree_private_mib": 554.44921875,
+      "peak_processes": 10,
+      "samples": 67,
+      "sampler_cpu_seconds": 1.1067226159999999,
+      "remaining_processes": 0,
+      "cpu_seconds": 7.862957,
+      "cpu_user_seconds": 6.977717,
+      "cpu_system_seconds": 0.88524,
+      "wall_seconds": 3.338541976059787,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 3.155239282990806,
+          "token_length": 645,
+          "attempts": 1
+        },
+        {
+          "index": 1,
+          "success": true,
+          "elapsed": 3.329295650939457,
+          "token_length": 645,
+          "attempts": 1
+        }
+      ],
+      "successes": 2,
+      "cpu_seconds_per_call": 3.9314785,
+      "average_cpu_cores": 2.355206870659154
+    },
+    {
+      "variant": "old_full_new_helper",
+      "concurrency": 4,
+      "repetition": 1,
+      "driver_idle_pss_mib": 18.34765625,
+      "peak_tree_pss_mib": 1091.2861328125,
+      "peak_tree_rss_mib": 1661.7421875,
+      "peak_tree_private_mib": 1024.23828125,
+      "peak_processes": 19,
+      "samples": 88,
+      "sampler_cpu_seconds": 2.4934833100000002,
+      "remaining_processes": 0,
+      "cpu_seconds": 16.553474,
+      "cpu_user_seconds": 14.703258,
+      "cpu_system_seconds": 1.850215,
+      "wall_seconds": 4.56984900101088,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 4.319090581964701,
+          "token_length": 645,
+          "attempts": 1
+        },
+        {
+          "index": 1,
+          "success": true,
+          "elapsed": 4.40052965504583,
+          "token_length": 645,
+          "attempts": 1
+        },
+        {
+          "index": 2,
+          "success": true,
+          "elapsed": 4.170561891049147,
+          "token_length": 645,
+          "attempts": 1
+        },
+        {
+          "index": 3,
+          "success": true,
+          "elapsed": 4.558494086959399,
+          "token_length": 645,
+          "attempts": 1
+        }
+      ],
+      "successes": 4,
+      "cpu_seconds_per_call": 4.1383685,
+      "average_cpu_cores": 3.6223240628603413
+    },
+    {
+      "variant": "new_minimal",
+      "concurrency": 4,
+      "repetition": 1,
+      "driver_idle_pss_mib": 18.2919921875,
+      "peak_tree_pss_mib": 1455.24609375,
+      "peak_tree_rss_mib": 2575.56640625,
+      "peak_tree_private_mib": 1355.6640625,
+      "peak_processes": 17,
+      "samples": 119,
+      "sampler_cpu_seconds": 3.874447492,
+      "remaining_processes": 0,
+      "cpu_seconds": 21.678621,
+      "cpu_user_seconds": 19.194424,
+      "cpu_system_seconds": 2.484197,
+      "wall_seconds": 6.231371951987967,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 5.911211195052601,
+          "token_length": 624,
+          "attempts": 1
+        },
+        {
+          "index": 1,
+          "success": true,
+          "elapsed": 5.717851082910784,
+          "token_length": 624,
+          "attempts": 1
+        },
+        {
+          "index": 2,
+          "success": true,
+          "elapsed": 5.246370406006463,
+          "token_length": 624,
+          "attempts": 1
+        },
+        {
+          "index": 3,
+          "success": true,
+          "elapsed": 6.220235037035309,
+          "token_length": 645,
+          "attempts": 1
+        }
+      ],
+      "successes": 4,
+      "cpu_seconds_per_call": 5.41965525,
+      "average_cpu_cores": 3.4789483226216285
+    },
+    {
+      "variant": "old_full",
+      "concurrency": 4,
+      "repetition": 1,
+      "driver_idle_pss_mib": 18.306640625,
+      "peak_tree_pss_mib": 1053.1953125,
+      "peak_tree_rss_mib": 1652.46875,
+      "peak_tree_private_mib": 986.51171875,
+      "peak_processes": 18,
+      "samples": 88,
+      "sampler_cpu_seconds": 2.503977122,
+      "remaining_processes": 0,
+      "cpu_seconds": 16.882104,
+      "cpu_user_seconds": 15.045058,
+      "cpu_system_seconds": 1.837045,
+      "wall_seconds": 4.601803046069108,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 4.519027466070838,
+          "token_length": 645,
+          "attempts": 1
+        },
+        {
+          "index": 1,
+          "success": true,
+          "elapsed": 4.253948858007789,
+          "token_length": 624,
+          "attempts": 1
+        },
+        {
+          "index": 2,
+          "success": true,
+          "elapsed": 4.511273962096311,
+          "token_length": 624,
+          "attempts": 1
+        },
+        {
+          "index": 3,
+          "success": true,
+          "elapsed": 4.591615505050868,
+          "token_length": 645,
+          "attempts": 1
+        }
+      ],
+      "successes": 4,
+      "cpu_seconds_per_call": 4.220526,
+      "average_cpu_cores": 3.668584646277031
+    },
+    {
+      "variant": "old_full_new_helper",
+      "concurrency": 1,
+      "repetition": 2,
+      "driver_idle_pss_mib": 18.224609375,
+      "peak_tree_pss_mib": 345.94921875,
+      "peak_tree_rss_mib": 465.85546875,
+      "peak_tree_private_mib": 321.01953125,
+      "peak_processes": 6,
+      "samples": 68,
+      "sampler_cpu_seconds": 0.6714932769999997,
+      "remaining_processes": 0,
+      "cpu_seconds": 3.936722,
+      "cpu_user_seconds": 3.478663,
+      "cpu_system_seconds": 0.458059,
+      "wall_seconds": 3.335842880071141,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 3.3313117349753156,
+          "token_length": 645,
+          "attempts": 1
+        }
+      ],
+      "successes": 1,
+      "cpu_seconds_per_call": 3.936722,
+      "average_cpu_cores": 1.1801281239948702
+    },
+    {
+      "variant": "old_full",
+      "concurrency": 1,
+      "repetition": 2,
+      "driver_idle_pss_mib": 18.255859375,
+      "peak_tree_pss_mib": 328.6689453125,
+      "peak_tree_rss_mib": 445.17578125,
+      "peak_tree_private_mib": 304.03125,
+      "peak_processes": 6,
+      "samples": 67,
+      "sampler_cpu_seconds": 0.6112294949999999,
+      "remaining_processes": 0,
+      "cpu_seconds": 4.081515,
+      "cpu_user_seconds": 3.598275,
+      "cpu_system_seconds": 0.483239,
+      "wall_seconds": 3.284809393924661,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 3.279962806031108,
+          "token_length": 645,
+          "attempts": 1
+        }
+      ],
+      "successes": 1,
+      "cpu_seconds_per_call": 4.081515,
+      "average_cpu_cores": 1.242542415870116
+    },
+    {
+      "variant": "new_minimal",
+      "concurrency": 1,
+      "repetition": 2,
+      "driver_idle_pss_mib": 18.3583984375,
+      "peak_tree_pss_mib": 494.0517578125,
+      "peak_tree_rss_mib": 723.87109375,
+      "peak_tree_private_mib": 458.109375,
+      "peak_processes": 5,
+      "samples": 86,
+      "sampler_cpu_seconds": 1.0212261689999984,
+      "remaining_processes": 0,
+      "cpu_seconds": 4.873669,
+      "cpu_user_seconds": 4.302539,
+      "cpu_system_seconds": 0.57113,
+      "wall_seconds": 4.2779264219570905,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 4.273156489012763,
+          "token_length": 624,
+          "attempts": 1
+        }
+      ],
+      "successes": 1,
+      "cpu_seconds_per_call": 4.873669,
+      "average_cpu_cores": 1.1392596597700166
+    },
+    {
+      "variant": "old_full",
+      "concurrency": 2,
+      "repetition": 2,
+      "driver_idle_pss_mib": 18.2783203125,
+      "peak_tree_pss_mib": 638.4697265625,
+      "peak_tree_rss_mib": 909.44921875,
+      "peak_tree_private_mib": 576.3125,
+      "peak_processes": 10,
+      "samples": 71,
+      "sampler_cpu_seconds": 1.1331903020000027,
+      "remaining_processes": 0,
+      "cpu_seconds": 8.636995,
+      "cpu_user_seconds": 7.722966,
+      "cpu_system_seconds": 0.914029,
+      "wall_seconds": 3.5244172289967537,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 3.517051033093594,
+          "token_length": 645,
+          "attempts": 1
+        },
+        {
+          "index": 1,
+          "success": true,
+          "elapsed": 3.444435372017324,
+          "token_length": 645,
+          "attempts": 1
+        }
+      ],
+      "successes": 2,
+      "cpu_seconds_per_call": 4.3184975,
+      "average_cpu_cores": 2.4506164959528847
+    },
+    {
+      "variant": "old_full_new_helper",
+      "concurrency": 2,
+      "repetition": 2,
+      "driver_idle_pss_mib": 18.2734375,
+      "peak_tree_pss_mib": 603.427734375,
+      "peak_tree_rss_mib": 869.54296875,
+      "peak_tree_private_mib": 539.96875,
+      "peak_processes": 10,
+      "samples": 72,
+      "sampler_cpu_seconds": 1.1522456010000006,
+      "remaining_processes": 0,
+      "cpu_seconds": 8.107802,
+      "cpu_user_seconds": 7.215328,
+      "cpu_system_seconds": 0.892474,
+      "wall_seconds": 3.562175677041523,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 3.1837516020750627,
+          "token_length": 645,
+          "attempts": 1
+        },
+        {
+          "index": 1,
+          "success": true,
+          "elapsed": 3.554599555907771,
+          "token_length": 645,
+          "attempts": 1
+        }
+      ],
+      "successes": 2,
+      "cpu_seconds_per_call": 4.053901,
+      "average_cpu_cores": 2.2760814555709206
+    },
+    {
+      "variant": "new_minimal",
+      "concurrency": 2,
+      "repetition": 2,
+      "driver_idle_pss_mib": 18.2685546875,
+      "peak_tree_pss_mib": 860.3642578125,
+      "peak_tree_rss_mib": 1396.171875,
+      "peak_tree_private_mib": 760.484375,
+      "peak_processes": 9,
+      "samples": 127,
+      "sampler_cpu_seconds": 2.4822467249999995,
+      "remaining_processes": 0,
+      "cpu_seconds": 10.024056,
+      "cpu_user_seconds": 8.832694,
+      "cpu_system_seconds": 1.191362,
+      "wall_seconds": 6.339638377074152,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 4.701933595002629,
+          "token_length": 645,
+          "attempts": 1
+        },
+        {
+          "index": 1,
+          "success": true,
+          "elapsed": 6.33117428002879,
+          "token_length": 624,
+          "attempts": 1
+        }
+      ],
+      "successes": 2,
+      "cpu_seconds_per_call": 5.012028,
+      "average_cpu_cores": 1.5811715753771853
+    },
+    {
+      "variant": "old_full",
+      "concurrency": 4,
+      "repetition": 2,
+      "driver_idle_pss_mib": 18.2958984375,
+      "peak_tree_pss_mib": 1188.4111328125,
+      "peak_tree_rss_mib": 1747.640625,
+      "peak_tree_private_mib": 1121.2578125,
+      "peak_processes": 18,
+      "samples": 96,
+      "sampler_cpu_seconds": 2.7489808540000027,
+      "remaining_processes": 0,
+      "cpu_seconds": 18.172319,
+      "cpu_user_seconds": 16.21025,
+      "cpu_system_seconds": 1.962069,
+      "wall_seconds": 5.143996985978447,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 4.808101589092985,
+          "token_length": 645,
+          "attempts": 1
+        },
+        {
+          "index": 1,
+          "success": true,
+          "elapsed": 4.60845692595467,
+          "token_length": 645,
+          "attempts": 1
+        },
+        {
+          "index": 2,
+          "success": true,
+          "elapsed": 5.134725462994538,
+          "token_length": 645,
+          "attempts": 1
+        },
+        {
+          "index": 3,
+          "success": true,
+          "elapsed": 4.599060919019394,
+          "token_length": 645,
+          "attempts": 1
+        }
+      ],
+      "successes": 4,
+      "cpu_seconds_per_call": 4.54307975,
+      "average_cpu_cores": 3.532723492944158
+    },
+    {
+      "variant": "new_minimal",
+      "concurrency": 4,
+      "repetition": 2,
+      "driver_idle_pss_mib": 18.2607421875,
+      "peak_tree_pss_mib": 1566.8203125,
+      "peak_tree_rss_mib": 2698.23046875,
+      "peak_tree_private_mib": 1470.515625,
+      "peak_processes": 17,
+      "samples": 103,
+      "sampler_cpu_seconds": 3.49132947,
+      "remaining_processes": 0,
+      "cpu_seconds": 20.957063,
+      "cpu_user_seconds": 18.629301,
+      "cpu_system_seconds": 2.327761,
+      "wall_seconds": 5.798201447003521,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 5.530353636946529,
+          "token_length": 645,
+          "attempts": 1
+        },
+        {
+          "index": 1,
+          "success": true,
+          "elapsed": 5.670049055013806,
+          "token_length": 624,
+          "attempts": 1
+        },
+        {
+          "index": 2,
+          "success": true,
+          "elapsed": 5.788210803992115,
+          "token_length": 645,
+          "attempts": 1
+        },
+        {
+          "index": 3,
+          "success": true,
+          "elapsed": 5.673221189994365,
+          "token_length": 624,
+          "attempts": 1
+        }
+      ],
+      "successes": 4,
+      "cpu_seconds_per_call": 5.23926575,
+      "average_cpu_cores": 3.614407535086677
+    },
+    {
+      "variant": "old_full_new_helper",
+      "concurrency": 4,
+      "repetition": 2,
+      "driver_idle_pss_mib": 18.30078125,
+      "peak_tree_pss_mib": 1166.3212890625,
+      "peak_tree_rss_mib": 1776.76171875,
+      "peak_tree_private_mib": 1099.6171875,
+      "peak_processes": 19,
+      "samples": 83,
+      "sampler_cpu_seconds": 2.4178230190000036,
+      "remaining_processes": 0,
+      "cpu_seconds": 16.589964,
+      "cpu_user_seconds": 14.753112,
+      "cpu_system_seconds": 1.836851,
+      "wall_seconds": 4.458692105021328,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 4.381544028990902,
+          "token_length": 645,
+          "attempts": 1
+        },
+        {
+          "index": 1,
+          "success": true,
+          "elapsed": 4.271099715027958,
+          "token_length": 645,
+          "attempts": 1
+        },
+        {
+          "index": 2,
+          "success": true,
+          "elapsed": 4.448742230073549,
+          "token_length": 645,
+          "attempts": 1
+        },
+        {
+          "index": 3,
+          "success": true,
+          "elapsed": 3.9525470619555563,
+          "token_length": 645,
+          "attempts": 1
+        }
+      ],
+      "successes": 4,
+      "cpu_seconds_per_call": 4.147491,
+      "average_cpu_cores": 3.7208139986424658
+    },
+    {
+      "variant": "new_minimal",
+      "concurrency": 1,
+      "repetition": 3,
+      "driver_idle_pss_mib": 18.3125,
+      "peak_tree_pss_mib": 458.826171875,
+      "peak_tree_rss_mib": 692.29296875,
+      "peak_tree_private_mib": 412.0,
+      "peak_processes": 6,
+      "samples": 113,
+      "sampler_cpu_seconds": 1.611841412000004,
+      "remaining_processes": 0,
+      "cpu_seconds": 5.29557,
+      "cpu_user_seconds": 4.696343,
+      "cpu_system_seconds": 0.599226,
+      "wall_seconds": 5.604005437926389,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 5.599508777959272,
+          "token_length": 624,
+          "attempts": 1
+        }
+      ],
+      "successes": 1,
+      "cpu_seconds_per_call": 5.29557,
+      "average_cpu_cores": 0.944961609808766
+    },
+    {
+      "variant": "old_full",
+      "concurrency": 1,
+      "repetition": 3,
+      "driver_idle_pss_mib": 18.33984375,
+      "peak_tree_pss_mib": 354.708984375,
+      "peak_tree_rss_mib": 476.359375,
+      "peak_tree_private_mib": 329.12109375,
+      "peak_processes": 6,
+      "samples": 68,
+      "sampler_cpu_seconds": 0.8211918520000054,
+      "remaining_processes": 0,
+      "cpu_seconds": 4.193683,
+      "cpu_user_seconds": 3.712044,
+      "cpu_system_seconds": 0.481638,
+      "wall_seconds": 3.36949938791804,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 3.3647211279021576,
+          "token_length": 645,
+          "attempts": 1
+        }
+      ],
+      "successes": 1,
+      "cpu_seconds_per_call": 4.193683,
+      "average_cpu_cores": 1.244601205460141
+    },
+    {
+      "variant": "old_full_new_helper",
+      "concurrency": 1,
+      "repetition": 3,
+      "driver_idle_pss_mib": 18.2900390625,
+      "peak_tree_pss_mib": 341.9990234375,
+      "peak_tree_rss_mib": 478.05078125,
+      "peak_tree_private_mib": 317.4375,
+      "peak_processes": 6,
+      "samples": 73,
+      "sampler_cpu_seconds": 0.7847550080000048,
+      "remaining_processes": 0,
+      "cpu_seconds": 4.622495,
+      "cpu_user_seconds": 4.097103,
+      "cpu_system_seconds": 0.525391,
+      "wall_seconds": 3.5962042059982195,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 3.59061782003846,
+          "token_length": 645,
+          "attempts": 1
+        }
+      ],
+      "successes": 1,
+      "cpu_seconds_per_call": 4.622495,
+      "average_cpu_cores": 1.285381678907443
+    },
+    {
+      "variant": "new_minimal",
+      "concurrency": 2,
+      "repetition": 3,
+      "driver_idle_pss_mib": 18.275390625,
+      "peak_tree_pss_mib": 771.5,
+      "peak_tree_rss_mib": 1293.4765625,
+      "peak_tree_private_mib": 676.84375,
+      "peak_processes": 11,
+      "samples": 87,
+      "sampler_cpu_seconds": 1.6181137069999991,
+      "remaining_processes": 0,
+      "cpu_seconds": 9.250027,
+      "cpu_user_seconds": 8.120571,
+      "cpu_system_seconds": 1.129456,
+      "wall_seconds": 4.317042588954791,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 4.0923679859843105,
+          "token_length": 624,
+          "attempts": 1
+        },
+        {
+          "index": 1,
+          "success": true,
+          "elapsed": 4.309048593044281,
+          "token_length": 645,
+          "attempts": 1
+        }
+      ],
+      "successes": 2,
+      "cpu_seconds_per_call": 4.6250135,
+      "average_cpu_cores": 2.142676800008022
+    },
+    {
+      "variant": "old_full_new_helper",
+      "concurrency": 2,
+      "repetition": 3,
+      "driver_idle_pss_mib": 18.2587890625,
+      "peak_tree_pss_mib": 613.990234375,
+      "peak_tree_rss_mib": 880.078125,
+      "peak_tree_private_mib": 552.11328125,
+      "peak_processes": 10,
+      "samples": 75,
+      "sampler_cpu_seconds": 1.4381783940000048,
+      "remaining_processes": 0,
+      "cpu_seconds": 8.845338,
+      "cpu_user_seconds": 7.81854,
+      "cpu_system_seconds": 1.026797,
+      "wall_seconds": 3.715701919980347,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 3.7072073039598763,
+          "token_length": 624,
+          "attempts": 1
+        },
+        {
+          "index": 1,
+          "success": true,
+          "elapsed": 3.5718290719669312,
+          "token_length": 645,
+          "attempts": 1
+        }
+      ],
+      "successes": 2,
+      "cpu_seconds_per_call": 4.422669,
+      "average_cpu_cores": 2.3805294909250376
+    },
+    {
+      "variant": "old_full",
+      "concurrency": 2,
+      "repetition": 3,
+      "driver_idle_pss_mib": 18.333984375,
+      "peak_tree_pss_mib": 552.8056640625,
+      "peak_tree_rss_mib": 811.23046875,
+      "peak_tree_private_mib": 489.28125,
+      "peak_processes": 10,
+      "samples": 74,
+      "sampler_cpu_seconds": 1.2243832559999959,
+      "remaining_processes": 0,
+      "cpu_seconds": 8.508673,
+      "cpu_user_seconds": 7.58748,
+      "cpu_system_seconds": 0.921193,
+      "wall_seconds": 3.670705204945989,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 3.431514177005738,
+          "token_length": 645,
+          "attempts": 1
+        },
+        {
+          "index": 1,
+          "success": true,
+          "elapsed": 3.6596991879632697,
+          "token_length": 645,
+          "attempts": 1
+        }
+      ],
+      "successes": 2,
+      "cpu_seconds_per_call": 4.2543365,
+      "average_cpu_cores": 2.31799409784671
+    },
+    {
+      "variant": "old_full_new_helper",
+      "concurrency": 4,
+      "repetition": 3,
+      "driver_idle_pss_mib": 18.271484375,
+      "peak_tree_pss_mib": 1102.0888671875,
+      "peak_tree_rss_mib": 1684.0,
+      "peak_tree_private_mib": 1035.8203125,
+      "peak_processes": 18,
+      "samples": 116,
+      "sampler_cpu_seconds": 2.8902165520000054,
+      "remaining_processes": 0,
+      "cpu_seconds": 16.45244,
+      "cpu_user_seconds": 14.5928,
+      "cpu_system_seconds": 1.859639,
+      "wall_seconds": 5.958376520080492,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 4.429150021984242,
+          "token_length": 645,
+          "attempts": 1
+        },
+        {
+          "index": 1,
+          "success": true,
+          "elapsed": 4.281840112991631,
+          "token_length": 645,
+          "attempts": 1
+        },
+        {
+          "index": 2,
+          "success": true,
+          "elapsed": 5.948563762940466,
+          "token_length": 624,
+          "attempts": 1
+        },
+        {
+          "index": 3,
+          "success": true,
+          "elapsed": 4.2651073259767145,
+          "token_length": 645,
+          "attempts": 1
+        }
+      ],
+      "successes": 4,
+      "cpu_seconds_per_call": 4.11311,
+      "average_cpu_cores": 2.7612286575971106
+    },
+    {
+      "variant": "new_minimal",
+      "concurrency": 4,
+      "repetition": 3,
+      "driver_idle_pss_mib": 18.3095703125,
+      "peak_tree_pss_mib": 1467.521484375,
+      "peak_tree_rss_mib": 2594.6796875,
+      "peak_tree_private_mib": 1369.87890625,
+      "peak_processes": 17,
+      "samples": 108,
+      "sampler_cpu_seconds": 3.807804335,
+      "remaining_processes": 0,
+      "cpu_seconds": 20.969961,
+      "cpu_user_seconds": 18.442157,
+      "cpu_system_seconds": 2.527804,
+      "wall_seconds": 5.902491491055116,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 5.566826642956585,
+          "token_length": 624,
+          "attempts": 1
+        },
+        {
+          "index": 1,
+          "success": true,
+          "elapsed": 5.8121103560552,
+          "token_length": 624,
+          "attempts": 1
+        },
+        {
+          "index": 2,
+          "success": true,
+          "elapsed": 5.891185259097256,
+          "token_length": 624,
+          "attempts": 1
+        },
+        {
+          "index": 3,
+          "success": true,
+          "elapsed": 5.786307635018602,
+          "token_length": 624,
+          "attempts": 1
+        }
+      ],
+      "successes": 4,
+      "cpu_seconds_per_call": 5.24249025,
+      "average_cpu_cores": 3.5527304074523043
+    },
+    {
+      "variant": "old_full",
+      "concurrency": 4,
+      "repetition": 3,
+      "driver_idle_pss_mib": 18.3330078125,
+      "peak_tree_pss_mib": 1095.4921875,
+      "peak_tree_rss_mib": 1721.5390625,
+      "peak_tree_private_mib": 1028.80859375,
+      "peak_processes": 19,
+      "samples": 126,
+      "sampler_cpu_seconds": 2.9693042789999993,
+      "remaining_processes": 0,
+      "cpu_seconds": 17.309245,
+      "cpu_user_seconds": 15.377961,
+      "cpu_system_seconds": 1.931284,
+      "wall_seconds": 6.482709396048449,
+      "solutions": [
+        {
+          "index": 0,
+          "success": true,
+          "elapsed": 6.472635598038323,
+          "token_length": 624,
+          "attempts": 1
+        },
+        {
+          "index": 1,
+          "success": true,
+          "elapsed": 4.401752155972645,
+          "token_length": 624,
+          "attempts": 1
+        },
+        {
+          "index": 2,
+          "success": true,
+          "elapsed": 4.452145503018983,
+          "token_length": 645,
+          "attempts": 1
+        },
+        {
+          "index": 3,
+          "success": true,
+          "elapsed": 4.94896254001651,
+          "token_length": 645,
+          "attempts": 1
+        }
+      ],
+      "successes": 4,
+      "cpu_seconds_per_call": 4.32731125,
+      "average_cpu_cores": 2.670063385927941
+    }
+  ],
+  "summary": [
+    {
+      "variant": "new_minimal",
+      "concurrency": 1,
+      "successes": 3,
+      "calls": 3,
+      "median_token_seconds": 4.406060946988873,
+      "median_batch_seconds": 4.411124010919593,
+      "cpu_seconds_per_success": 4.9901903333333335,
+      "median_peak_pss_mib": 460.8896484375,
+      "median_peak_rss_mib": 692.29296875,
+      "remaining_processes": 0
+    },
+    {
+      "variant": "old_full",
+      "concurrency": 1,
+      "successes": 3,
+      "calls": 3,
+      "median_token_seconds": 3.3647211279021576,
+      "median_batch_seconds": 3.36949938791804,
+      "cpu_seconds_per_success": 4.3121719999999994,
+      "median_peak_pss_mib": 354.708984375,
+      "median_peak_rss_mib": 476.359375,
+      "remaining_processes": 0
+    },
+    {
+      "variant": "old_full_new_helper",
+      "concurrency": 1,
+      "successes": 3,
+      "calls": 3,
+      "median_token_seconds": 3.3313117349753156,
+      "median_batch_seconds": 3.335842880071141,
+      "cpu_seconds_per_success": 4.228675,
+      "median_peak_pss_mib": 341.9990234375,
+      "median_peak_rss_mib": 465.85546875,
+      "remaining_processes": 0
+    },
+    {
+      "variant": "new_minimal",
+      "concurrency": 2,
+      "successes": 6,
+      "calls": 6,
+      "median_token_seconds": 4.448971621517558,
+      "median_batch_seconds": 4.582387069938704,
+      "cpu_seconds_per_success": 4.8815195,
+      "median_peak_pss_mib": 838.1708984375,
+      "median_peak_rss_mib": 1348.2109375,
+      "remaining_processes": 0
+    },
+    {
+      "variant": "old_full",
+      "concurrency": 2,
+      "successes": 6,
+      "calls": 6,
+      "median_token_seconds": 3.437974774511531,
+      "median_batch_seconds": 3.5244172289967537,
+      "cpu_seconds_per_success": 4.168104166666667,
+      "median_peak_pss_mib": 617.9892578125,
+      "median_peak_rss_mib": 889.05859375,
+      "remaining_processes": 0
+    },
+    {
+      "variant": "old_full_new_helper",
+      "concurrency": 2,
+      "successes": 6,
+      "calls": 6,
+      "median_token_seconds": 3.425346299947705,
+      "median_batch_seconds": 3.562175677041523,
+      "cpu_seconds_per_success": 4.098337166666666,
+      "median_peak_pss_mib": 603.427734375,
+      "median_peak_rss_mib": 869.54296875,
+      "remaining_processes": 0
+    },
+    {
+      "variant": "new_minimal",
+      "concurrency": 4,
+      "successes": 12,
+      "calls": 12,
+      "median_token_seconds": 5.752079358964693,
+      "median_batch_seconds": 5.902491491055116,
+      "cpu_seconds_per_success": 5.300470416666667,
+      "median_peak_pss_mib": 1467.521484375,
+      "median_peak_rss_mib": 2594.6796875,
+      "remaining_processes": 0
+    },
+    {
+      "variant": "old_full",
+      "concurrency": 4,
+      "successes": 12,
+      "calls": 12,
+      "median_token_seconds": 4.595338212035131,
+      "median_batch_seconds": 5.143996985978447,
+      "cpu_seconds_per_success": 4.363639,
+      "median_peak_pss_mib": 1095.4921875,
+      "median_peak_rss_mib": 1721.5390625,
+      "remaining_processes": 0
+    },
+    {
+      "variant": "old_full_new_helper",
+      "concurrency": 4,
+      "successes": 12,
+      "calls": 12,
+      "median_token_seconds": 4.350317305477802,
+      "median_batch_seconds": 4.56984900101088,
+      "cpu_seconds_per_success": 4.132989833333333,
+      "median_peak_pss_mib": 1102.0888671875,
+      "median_peak_rss_mib": 1684.0,
+      "remaining_processes": 0
+    }
+  ],
+  "finished_at": "2026-11-07T10:37:11.959178+00:00",
+  "kernel_sources": {
+    "new_minimal": "b9877c412c779bb783da1db523806b14732a881d",
+    "old_full": "158eae70e9cc78b263474aca58bc42d10412c990"
+  },
+  "driver_sha256": "135540a37221c71150df31c987cef07f6af0a08215a17607320d8b990c8fb822",
+  "helper_fingerprints": {
+    "new_minimal": {
+      "backend": {
+        "backend": "standalone-necko+nss",
+        "nss": "3.131",
+        "http": [
+          "http/1.1",
+          "h2",
+          "h3"
+        ],
+        "http3": true,
+        "python": "3.14.4"
+      },
+      "files": {
+        "ruyijs_necko/oneshot.py": "b37d601b07e7bb3abe7860ac57f8867019b291b9fa0f9c785e71bc582e4eb609",
+        "necko/libnecko_core.so": "9d6f5b369946188bde07a529dae40cc491050f9bf78a03206b0ebd973d936772",
+        "necko/libnecko_quic.so": "ca701ef98cea17be50a0dbc4754b27241a8ab83939542002ad389da88c2095b5"
+      }
+    },
+    "old_full": {
+      "backend": {
+        "backend": "standalone-necko+nss",
+        "nss": "3.131",
+        "http": [
+          "http/1.1",
+          "h2",
+          "h3"
+        ],
+        "http3": true,
+        "python": "3.14.4"
+      },
+      "files": {
+        "ruyijs_necko/oneshot.py": "b37d601b07e7bb3abe7860ac57f8867019b291b9fa0f9c785e71bc582e4eb609",
+        "necko/libnecko_core.so": "9d6f5b369946188bde07a529dae40cc491050f9bf78a03206b0ebd973d936772",
+        "necko/libnecko_quic.so": "ca701ef98cea17be50a0dbc4754b27241a8ab83939542002ad389da88c2095b5"
+      }
+    },
+    "old_full_new_helper": {
+      "backend": {
+        "backend": "standalone-necko+nss",
+        "nss": "3.131",
+        "http": [
+          "http/1.1",
+          "h2",
+          "h3"
+        ],
+        "http3": true,
+        "python": "3.14.4"
+      },
+      "files": {
+        "ruyijs_necko/oneshot.py": "b37d601b07e7bb3abe7860ac57f8867019b291b9fa0f9c785e71bc582e4eb609",
+        "necko/libnecko_core.so": "9d6f5b369946188bde07a529dae40cc491050f9bf78a03206b0ebd973d936772",
+        "necko/libnecko_quic.so": "ca701ef98cea17be50a0dbc4754b27241a8ab83939542002ad389da88c2095b5"
+      }
+    }
+  },
+  "comparison": [
+    {
+      "concurrency": 1,
+      "cpu_change_percent": 15.72336013807738,
+      "pss_change_percent": 29.934585460131814,
+      "latency_change_percent": 30.948770477628607
+    },
+    {
+      "concurrency": 2,
+      "cpu_change_percent": 17.116062958279386,
+      "pss_change_percent": 35.62871649328958,
+      "latency_change_percent": 29.406755817446893
+    },
+    {
+      "concurrency": 4,
+      "cpu_change_percent": 21.46904032773258,
+      "pss_change_percent": 33.96001369247556,
+      "latency_change_percent": 25.172056844479297
+    }
+  ]
+}
