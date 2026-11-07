@@ -206,7 +206,10 @@ def _solve_once(site_url: str, sitekey: str, *, action: str | None, cdata: str |
             finally:
                 # Cleanup has a separate bounded wait, even at the deadline.
                 context.timeout = 1
-    except TimeoutError as error:
+    except (TimeoutError, BlockingIOError) as error:
+        # A near-zero native RPC deadline can put the POSIX socket into
+        # nonblocking mode and surface EAGAIN. Retire that Context before
+        # retrying so no response from the interrupted request is reused.
         raise TurnstileError("Turnstile timed out before returning a token",
                              code="timeout", events=events) from error
 

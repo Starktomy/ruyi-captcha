@@ -1,5 +1,8 @@
 include README.md LICENSE NOTICE AGENTS.md
-recursive-include docs *.md
+include setup.py
+recursive-include tools *.py
+recursive-include ci *.py
+recursive-include docs *.md *.json
 recursive-include examples *.py
 recursive-include tests *.py
 global-exclude __pycache__ *.pyc *.pyo

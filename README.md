@@ -7,6 +7,25 @@
 
 ## 安装
 
+GitHub 发版流水线会同时提供两种 wheel：
+
+- `ruyi_captcha-版本-py3-none-any.whl`：轻量包，用于已有内核的环境或远程客户端。
+- 平台 wheel：内置锁定版本的 ff-ruyijs，安装后可直接本地求解，无需再安装 `ruyijs`。
+  支持 Windows x64、Linux x86_64、macOS arm64。
+
+从 [Releases](https://github.com/Starktomy/ruyi-captcha/releases) 下载匹配平台的文件后：
+
+```sh
+python -m pip install '下载的wheel文件.whl[api]'
+ruyi-captcha check-runtime
+ruyi-captcha serve --host 127.0.0.1 --port 8000
+```
+
+包模式只需安装 wheel；`[api]` 额外安装 HTTP 服务依赖。
+Linux 发版在 Ubuntu 24.04 构建，要求 glibc 2.39+；macOS arm64 要求 macOS 26+。
+本机生成的 Linux wheel 标为 `manylinux_2_43_x86_64`，它对应本机 glibc 2.43，
+应按 wheel 文件自己的平台标记选择安装环境。
+
 Python 3.10+。本机开发已配置 `/root/ff-ruyijs` 的兼容内核；其提交和已验证的
 Linux runtime SHA256 记录在 [runtime-lock.json](src/ruyi_captcha/runtime-lock.json)。
 
@@ -18,8 +37,9 @@ python3 -m venv .venv
 .venv/bin/ruyi-captcha check-runtime
 ```
 
-应用包本身不捆绑或自动下载浏览器内核。部署到其他机器时，先安装由所记录内核提交
-构建的匹配平台 wheel，再安装本包。上游原版 `ruyijs==0.3.5` 不包含必需的
+从源码构建的默认包是轻量版。可先安装由所记录内核提交构建的匹配平台 kernel wheel，
+再安装本包；也可以直接安装上面的内置内核平台 wheel。
+上游原版 `ruyijs==0.3.5` 不包含必需的
 Trusted Types 补丁；启动检查会实际验证能力，不能只按版本号判断兼容性。
 
 ## 模式一：接入已有 Python 流程
@@ -48,7 +68,8 @@ print(details.elapsed, details.attempts)
 `site_url` 可写为别名 `surl`，也支持旧风格的两个位置参数。
 `action`、`cdata`、`proxy`、`profile` 和 `shell` 可作为可选关键字参数。
 默认使用 Linux Firefox 159 profile；其他宿主应传入匹配的环境字典或 `profile=None`。
-可配合 `ruyijs.use_engine(engine)` 使用已有共享 Engine。
+可从 `ruyi_captcha` 导入 `Engine` 和 `use_engine`，使用所选择内核的共享引擎。
+若已有代码直接使用外部 `ruyijs.use_engine`，设置 `RUYI_CAPTCHA_KERNEL=external` 保持相同绑定实例。
 
 `timeout` 是**每次尝试**的预算，`attempts` 是最大尝试次数。取得 token 后应立即提交；
 取得 token 与业务后台接受是两种结果，本库不会在没有业务端回执时声称验证成功。
@@ -134,6 +155,7 @@ token = client.solve_turnstile(
 | `RUYI_CAPTCHA_QUEUE_SIZE` | 16 | 等待任务上限 |
 | `RUYI_CAPTCHA_QUEUE_TIMEOUT` | 30 | 最长排队秒数 |
 | `RUYI_CAPTCHA_RESULT_TTL` | 120 | 完成后结果在内存中保留的秒数 |
+| `RUYI_CAPTCHA_KERNEL` | `auto` | 优先内置内核；`bundled` 强制内置，`external` 使用外部 `ruyijs` |
 
 每次尝试创建独立 Context；一次 native 崩溃不会结束其他任务的进程。
 此版本的队列和结果存储位于**单个 API 进程的内存**，重启后任务和结果消失。
@@ -146,6 +168,9 @@ CLI 固定一个 HTTP worker；并发由上述任务池控制。多实例部署�
 ```sh
 .venv/bin/python -B -m unittest discover -s tests -v
 .venv/bin/python -m build
+
+# 内置内核 wheel，从锁定的内核源码及已构建的原生运行时打包。
+.venv/bin/python tools/build_bundled.py --kernel /root/ff-ruyijs
 ```
 
 离线测试覆盖队列、取消、幂等、期限、SDK、HTTP 鉴权和错误返回；native 用例在内核
@@ -154,3 +179,5 @@ CLI 固定一个 HTTP worker；并发由上述任务池控制。多实例部署�
 
 提交使用 Starktomy 的 GitHub noreply 身份，Codex 作为共同作者。
 本仓库采用 AGPL-3.0-only；内核依赖保留自身许可。
+
+发版规则、产物与内核锁定方式见 [release.md](docs/release.md)。

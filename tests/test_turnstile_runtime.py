@@ -5,9 +5,12 @@ import unittest
 from unittest.mock import patch
 
 try:
-    from ruyijs import Context, Engine, use_engine, get_runtime_path
+    from ruyi_captcha.runtime import load_bindings
+    bindings = load_bindings()
+    Context, Engine, use_engine, get_runtime_path = (bindings.Context, bindings.Engine,
+                                                    bindings.use_engine, bindings.get_runtime_path)
     SHELL = Path(get_runtime_path()) / 'dist' / ('js.exe' if sys.platform == 'win32' else 'js')
-except (ImportError, OSError, FileNotFoundError):
+except (ImportError, OSError, FileNotFoundError, __import__('ruyi_captcha').RuntimeUnavailable):
     Context = None
     SHELL = Path('/runtime-not-installed/js')
 from ruyi_captcha import TurnstileError, solve_turnstile
@@ -121,6 +124,28 @@ class TurnstileRuntimeTests(unittest.TestCase):
         self.assertEqual(solution.attempts, 2)
         self.assertEqual(len(self.contexts), 2)
         self.assertTrue(all(context.closed for context in self.contexts))
+
+    def test_nonblocking_rpc_deadline_uses_a_fresh_attempt(self):
+        contexts = []
+
+        class DeadlineContext(Context):
+            def __init__(self, **kwargs):
+                super().__init__(**kwargs)
+                contexts.append(self)
+                self.put_resource(API_URL, SUCCESS_API)
+
+            def advance(self, *args, **kwargs):
+                if len(contexts) == 1:
+                    raise BlockingIOError(11, "Resource temporarily unavailable")
+                return super().advance(*args, **kwargs)
+
+        with patch.object(solver, "Context", DeadlineContext):
+            result = solver.solve_turnstile_details(SITE_URL, SITEKEY, shell=SHELL,
+                profile=None, timeout=2, attempts=2)
+        self.assertEqual(result.token, TOKEN)
+        self.assertEqual(result.attempts, 2)
+        self.assertEqual(len(contexts), 2)
+        self.assertTrue(all(context.closed for context in contexts))
 
     def test_refreshed_checkbox_can_be_clicked_at_the_same_path(self):
         api = """globalThis.turnstile={render(target, options){

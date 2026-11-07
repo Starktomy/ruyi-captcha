@@ -8,4 +8,9 @@ Those sources were distributed under AGPL-3.0-only. This application is
 distributed under AGPL-3.0-only; see LICENSE.
 
 The ff-ruyijs runtime is a separate dependency and retains its own license
-and third-party notices. No Firefox engine binaries are included here.
+and third-party notices. Platform application wheels embed the pinned kernel
+wheel, its license files, and its original runtime/third-party notices.
+Source and lightweight application distributions do not contain engine binaries.
+
+The kernel CI workflows are adapted from ff-ruyijs at pinned commit
+b9877c412c779bb783da1db523806b14732a881d and invoke that checkout's build scripts.

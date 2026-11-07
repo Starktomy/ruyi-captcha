@@ -130,8 +130,9 @@ Trusted Types 和可信输入行为。构建时记录 kernel commit、upstream b
 兼容的私有修订可使用 `0.3.5+compat.1` 这样的本地版本标识；公开索引的规则不同，
 具体遵循 [Python 版本规范](https://packaging.python.org/en/latest/specifications/version-specifiers/)。
 
-当前应用 wheel 为纯 Python，内核仍需要匹配目标平台的原生 wheel。复制本机原生
-可执行文件到另一种系统版本，不等同于完成了可移植发布。
+轻量应用 wheel 为纯 Python；平台 wheel 在发版 CI 中嵌入匹配平台的内核与绑定。
+两个仓库仍独立维护，构建产物在应用发布时组合。复制本机原生可执行文件到另一种
+系统版本，不等同于完成了可移植发布。具体流程见 [release.md](release.md)。
 
 ## 许可证与下一阶段
 

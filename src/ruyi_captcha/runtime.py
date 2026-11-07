@@ -2,6 +2,8 @@
 from dataclasses import asdict, dataclass
 from functools import lru_cache
 import hashlib
+import importlib
+import importlib.util
 import os
 from pathlib import Path
 
@@ -9,6 +11,15 @@ from .errors import RuntimeUnavailable
 
 
 def load_bindings():
+    selected = os.getenv("RUYI_CAPTCHA_KERNEL", "auto")
+    if selected not in ("auto", "bundled", "external"):
+        raise RuntimeUnavailable("RUYI_CAPTCHA_KERNEL must be auto, bundled or external")
+    name = "ruyi_captcha._vendor.ruyijs"
+    if selected != "external":
+        if importlib.util.find_spec(name) is not None:
+            return importlib.import_module(name)
+        if selected == "bundled":
+            raise RuntimeUnavailable("This installation has no bundled kernel; install the platform wheel")
     try:
         import ruyijs
     except ImportError as error:
@@ -28,6 +39,7 @@ class RuntimeInfo:
     closed_shadow_host: bool
     trusted_input: bool
     frame_input: bool
+    bindings_source: str
 
     def to_dict(self):
         return asdict(self)
@@ -89,7 +101,8 @@ def _probe(shell, size, modified):
         context.click("document.querySelector('iframe').contentDocument.querySelector('button')", hold_ms=0)
         frame_input = context.eval("document.querySelector('iframe').contentWindow.__frameX") == 150
     info = RuntimeInfo(str(bindings.__version__), hashlib.sha256(Path(shell).read_bytes()).hexdigest(),
-                       trusted, bool(shadow), bool(trusted_input), bool(frame_input))
+                       trusted, bool(shadow), bool(trusted_input), bool(frame_input),
+                       "bundled" if bindings.__name__.startswith("ruyi_captcha._vendor.") else "external")
     if not (info.trusted_types and info.closed_shadow_host and info.trusted_input and info.frame_input):
         raise RuntimeUnavailable("The runtime lacks required Trusted Types or trusted-input capabilities; "
                                  "install the patched kernel pinned in runtime-lock.json")

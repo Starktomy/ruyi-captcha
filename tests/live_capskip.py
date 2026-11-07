@@ -9,10 +9,11 @@ from time import monotonic
 from urllib.parse import urlencode
 import urllib.request
 
-from ruyijs import Context
 from ruyi_captcha import ApiClient, solve_turnstile_details
 from ruyi_captcha.providers.turnstile import _linux_profile
-from ruyi_captcha.runtime import check_runtime
+from ruyi_captcha.runtime import check_runtime, load_bindings
+
+Context = load_bindings().Context
 
 URL = "https://capskip.com/captcha-demo/cloudflare-turnstile/"
 
