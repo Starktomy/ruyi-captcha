@@ -245,13 +245,104 @@ def _cookies(context) -> dict[str, str]:
     return cookies
 
 
-def _install_page_hooks(context, state: dict[str, Any]) -> None:
-    """Install the metrics compatibility hook and PX result observer."""
+def _export_cookies(context) -> dict[str, str]:
+    """Return the full cookie jar, including HttpOnly entries.
+
+    ``export_cookies`` exists on the plumbing ruyijs Context. Test doubles and
+    older kernels may not expose it, so fall back to ``document.cookie``.
+    """
     try:
-        context.eval(_METRICS_HOOK)
+        rows = context.export_cookies()
+    except (AttributeError, TypeError):
+        return _cookies(context)
     except Exception:
-        # A page without the Walmart metrics build can still expose PX764.
-        pass
+        return _cookies(context)
+    cookies: dict[str, str] = {}
+    for row in sorted(rows, key=lambda item: item.get("order", 0)):
+        name = str(row.get("name") or "")
+        if name:
+            cookies[name] = str(row.get("value") or "")
+    return cookies if cookies else _cookies(context)
+
+
+def _seed_cookies(context, cookies, cookie_domain: str | None = None) -> dict[str, str]:
+    """Install caller-supplied cookies before the target page is loaded.
+
+    Each domain gets a synthetic HTTPS document on that origin; ``document.cookie``
+    then sets the same domain/path pairs the requests session held. HttpOnly
+    entries cannot be restored through a page and are skipped. Returns the
+    name/value pairs that were seeded, which lets the caller distinguish a
+    pre-existing silent ``_px3`` from the fresh press token.
+    """
+    if not cookies:
+        return {}
+    if isinstance(cookies, dict):
+        records = [{"name": str(name), "value": str(value),
+                    "domain": cookie_domain or ""} for name, value in cookies.items()]
+    else:
+        records = []
+        for raw in cookies:
+            if not isinstance(raw, dict):
+                continue
+            name = str(raw.get("name") or "")
+            if not name:
+                continue
+            records.append({
+                "name": name,
+                "value": str(raw.get("value") or ""),
+                "domain": str(raw.get("domain") or cookie_domain or ""),
+                "path": str(raw.get("path") or "/"),
+                "secure": bool(raw.get("secure", True)),
+                "hostOnly": bool(raw.get("hostOnly", False)),
+                "sameSite": str(raw.get("sameSite") or ""),
+                "httpOnly": bool(raw.get("httpOnly", False)),
+            })
+
+    groups: dict[str, list[dict[str, Any]]] = {}
+    seeded: dict[str, str] = {}
+    for record in records:
+        name, value = record["name"], record["value"]
+        if not name or record.get("httpOnly") or any(c in name + value for c in ";\r\n"):
+            continue
+        domain = str(record.get("domain") or "").strip().lstrip(".").lower()
+        if not domain:
+            continue
+        groups.setdefault(domain, []).append(record)
+        seeded[name] = value
+
+    for domain, items in groups.items():
+        payload = []
+        for record in items:
+            fields = ["path=" + (record.get("path") or "/")]
+            if not record.get("hostOnly") and record.get("domain"):
+                fields.append("domain=" + record["domain"].strip().lower())
+            if record.get("secure", True):
+                fields.append("secure")
+            same_site = record.get("sameSite") or ""
+            if same_site.lower() in ("lax", "strict", "none"):
+                fields.append("samesite=" + same_site)
+            payload.append(f"{record['name']}={record['value']}; " + "; ".join(fields))
+        script = ("(() => { const items = " + json.dumps(payload) +
+                  "; for (const item of items) { try { document.cookie = item; } "
+                  "catch (e) {} } return items.length; })()")
+        try:
+            context.load_page(f"https://{domain}/",
+                              "<!doctype html><html><body></body></html>")
+            context.eval(script)
+        except Exception:
+            continue
+    return seeded
+
+
+def _install_page_hooks(context, state: dict[str, Any], *,
+                        metrics_hook: bool = True) -> None:
+    """Install the metrics compatibility hook and PX result observer."""
+    if metrics_hook:
+        try:
+            context.eval(_METRICS_HOOK)
+        except Exception:
+            # A page without the Walmart metrics build can still expose PX764.
+            pass
     windows = ["window"]
     for root in state.get("roots", []):
         if root.get("type") == 9 and root.get("path"):
@@ -332,7 +423,8 @@ def _press(context, target: str, rect: dict[str, Any], origin,
 
 def _solve_once(site_url: str, *, press_ms: int, timeout: float,
                 proxy: str | None, profile: dict[str, Any] | None,
-                shell, cancel_event) -> PerimeterXSolution:
+                shell, cancel_event, cookies=None, cookie_domain: str | None = None,
+                metrics_hook: bool = True) -> PerimeterXSolution:
     bindings = load_bindings()
     if cancel_event is not None and cancel_event.is_set():
         raise SolveCancelled()
@@ -342,7 +434,9 @@ def _solve_once(site_url: str, *, press_ms: int, timeout: float,
     hold = None
     accepted = False
     rejected = False
-    cookies: dict[str, str] = {}
+    jar: dict[str, str] = {}
+    seeded: dict[str, str] = {}
+    seeded_px3 = ""
 
     def record_status(value):
         if type(value) is int and abs(value) <= 9999:
@@ -363,8 +457,18 @@ def _solve_once(site_url: str, *, press_ms: int, timeout: float,
             request(context.configure_clock, "system")
             if profile is not None:
                 request(context.configure_fingerprint, profile)
+            if cookies:
+                try:
+                    seeded = request(_seed_cookies, context, cookies, cookie_domain)
+                    seeded_px3 = seeded.get("_px3", "")
+                except Exception:
+                    seeded, seeded_px3 = {}, ""
             request(context.expose, record_status, "__ruyiPxRecordStatus")
             request(context.navigate, site_url)
+
+            def fresh_px3(values: dict[str, str]) -> str:
+                token = values.get("_px3", "")
+                return token if token and token != seeded_px3 else ""
 
             while monotonic() < deadline:
                 if cancel_event is not None and cancel_event.is_set():
@@ -379,7 +483,7 @@ def _solve_once(site_url: str, *, press_ms: int, timeout: float,
                 if hold is None:
                     state = json.loads(request(
                         context.eval, "JSON.stringify(" + _STATE_JS + ")"))
-                    _install_page_hooks(context, state)
+                    _install_page_hooks(context, state, metrics_hook=metrics_hook)
                     candidates = [
                         button for button in state.get("buttons", [])
                         if button.get("visible") and button.get("rect", {}).get("width", 0) > 0
@@ -413,14 +517,14 @@ def _solve_once(site_url: str, *, press_ms: int, timeout: float,
                         if any(value == -1 for value in statuses):
                             rejected = True
                             break
-                        cookies = _cookies(context)
-                        if "_px3" in cookies:
+                        jar = _export_cookies(context)
+                        if fresh_px3(jar):
                             accepted = True
                             break
                     break
             if accepted:
                 try:
-                    cookies = _cookies(context)
+                    jar = _export_cookies(context)
                 except Exception:
                     pass
     except (TimeoutError, BlockingIOError) as error:
@@ -435,19 +539,27 @@ def _solve_once(site_url: str, *, press_ms: int, timeout: float,
         raise PerimeterXError(
             "PerimeterX challenge did not reach an accepted state",
             code="timeout", statuses=statuses)
-    token = cookies.get("_px3")
+    token = fresh_px3(jar)
+    if not token and seeded_px3:
+        raise PerimeterXError(
+            "PerimeterX did not issue a fresh _px3 after the press",
+            code="missing_cookie", statuses=statuses)
+    if not token:
+        token = jar.get("_px3")
     if not token:
         raise PerimeterXError(
             "PerimeterX accepted the challenge without a _px3 cookie",
             code="missing_cookie", statuses=statuses)
-    return PerimeterXSolution(token, cookies, monotonic() - started, 1, True)
+    return PerimeterXSolution(token, jar, monotonic() - started, 1, True)
 
 
 def solve_perimeterx_details(site_url: str, *, press_ms: int = _DEFAULT_PRESS_MS,
                              timeout: float = 90.0, attempts: int = 3,
                              proxy: str | None = None,
                              profile: dict[str, Any] | str | None = "linux",
-                             shell=None, _cancel_event=None) -> PerimeterXSolution:
+                             shell=None, cookies=None, cookie_domain: str | None = None,
+                             metrics_hook: bool = True,
+                             _cancel_event=None) -> PerimeterXSolution:
     """Return the accepted ``_px3`` cookie and timing details.
 
     ``site_url`` must be the page that serves the PerimeterX challenge
@@ -455,6 +567,12 @@ def solve_perimeterx_details(site_url: str, *, press_ms: int = _DEFAULT_PRESS_MS
     not the NopeCHA wrapper iframe). Each attempt uses a fresh Context and the
     caller-supplied proxy. Timeout is the per-attempt budget, including
     navigation and input.
+
+    ``cookies`` optionally seeds the browser jar before navigation. Pass either
+    a ``{name: value}`` mapping (with ``cookie_domain``) or a list of records
+    shaped like requests cookies (``name``, ``value``, ``domain``, ``path``,
+    ``secure``). Entries marked HttpOnly are skipped because page script cannot
+    recreate them.
     """
     site_url = _validated_url(site_url)
     if isinstance(press_ms, bool) or not isinstance(press_ms, int) or not (
@@ -485,7 +603,9 @@ def solve_perimeterx_details(site_url: str, *, press_ms: int = _DEFAULT_PRESS_MS
         try:
             solution = _solve_once(site_url, press_ms=press_ms, timeout=timeout,
                                    proxy=proxy, profile=configured, shell=shell,
-                                   cancel_event=_cancel_event)
+                                   cancel_event=_cancel_event, cookies=cookies,
+                                   cookie_domain=cookie_domain,
+                                   metrics_hook=metrics_hook)
             return PerimeterXSolution(solution.token, solution.cookies,
                                       monotonic() - started, attempt, True)
         except PerimeterXError as error:
