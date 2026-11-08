@@ -25,6 +25,16 @@ def main(argv=None):
     solve.add_argument("--action")
     solve.add_argument("--cdata")
     solve.add_argument("--json", action="store_true")
+    px = commands.add_parser("perimeterx", help="Solve a PerimeterX press-and-hold challenge")
+    px.add_argument("site_url")
+    px.add_argument("--press-ms", type=int, default=6000)
+    px.add_argument("--timeout", type=float, default=90)
+    px.add_argument("--attempts", type=int, default=3)
+    px.add_argument("--proxy")
+    px_profile = px.add_mutually_exclusive_group()
+    px_profile.add_argument("--profile", choices=("linux", "default"), default="linux")
+    px_profile.add_argument("--profile-file", type=Path, help="Use an exported Firefox profile JSON object")
+    px.add_argument("--json", action="store_true")
     serve = commands.add_parser("serve", help="Start the HTTP API")
     serve.add_argument("--host", default="127.0.0.1")
     serve.add_argument("--port", type=int, default=8000)
@@ -50,6 +60,16 @@ def main(argv=None):
         if args.command == "check-runtime":
             from .runtime import check_runtime
             print(json.dumps(check_runtime().to_dict(), indent=2))
+        elif args.command == "perimeterx":
+            from .sdk import solve_perimeterx_details
+            profile = args.profile
+            if args.profile_file:
+                profile = json.loads(args.profile_file.read_text(encoding="utf-8"))
+                if not isinstance(profile, dict):
+                    raise ValueError("profile file must contain a JSON object")
+            result = solve_perimeterx_details(args.site_url, press_ms=args.press_ms,
+                timeout=args.timeout, attempts=args.attempts, proxy=args.proxy, profile=profile)
+            print(json.dumps(asdict(result)) if args.json else result.token)
         else:
             from .sdk import solve_turnstile_details
             profile = args.profile

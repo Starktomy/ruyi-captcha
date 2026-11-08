@@ -8,6 +8,9 @@ from ruyi_captcha.api import Settings, create_app
 from ruyi_captcha.errors import CaptchaError, RuntimeUnavailable, SolveCancelled
 
 PARAMS = {"type": "turnstile", "site_url": "https://example.test/", "sitekey": "0x4AAAAAADogn3t3_JKwKkgS"}
+PX_PARAMS = {"type": "perimeterx", "site_url": "https://example.test/blocked", "press_ms": 6000}
+PX_RESULT = {"token": "offline-px3-token", "cookies": {"_px3": "offline-px3-token"},
+             "elapsed": 0.01, "attempts": 1, "verified": True}
 RESULT = {"token": "offline-api-" + "x" * 240, "elapsed": 0.01, "attempts": 1}
 AUTH = {"Authorization": "Bearer test-key"}
 
@@ -78,7 +81,7 @@ class ApiTests(unittest.TestCase):
                  {"site_url": "https://example.test:bad/"},
                  {"sitekey": "short"}, {"cdata": "contains spaces"}, {"action": ""},
                  {"timeout": 0}, {"timeout": True}, {"attempts": False}, {"attempts": 4},
-                 {"type": "not-implemented"}, {"proxy": "socks5://proxy.test:1000"},
+                 {"type": "not-implemented"}, {"proxy": "ftp://proxy.test:1000"},
                  {"shell": "/bin/anything"})
         for invalid in cases:
             with self.subTest(invalid=invalid):
@@ -130,6 +133,22 @@ class ApiTests(unittest.TestCase):
         self.wait(client, job["id"])
         now[0] = 2
         self.assertEqual(client.get("/v1/tasks/" + job["id"], headers=AUTH).status_code, 404)
+
+    def test_perimeterx_accepts_missing_sitekey_and_socks_proxy(self):
+        seen = []
+        client = self.client(lambda p, c: seen.append(p) or PX_RESULT)
+        response = client.post("/v1/solve", headers=AUTH,
+                               json={**PX_PARAMS, "proxy": "socks5h://user:pass@proxy.test:1080"})
+        self.assertEqual(response.status_code, 200, response.text)
+        job = response.json()
+        self.assertEqual(job["status"], "succeeded")
+        self.assertEqual(job["result"]["type"], "perimeterx")
+        self.assertEqual(job["result"]["verification_status"], "challenge_accepted")
+        self.assertEqual(job["result"]["token"], PX_RESULT["token"])
+        self.assertEqual(job["result"]["cookies"], PX_RESULT["cookies"])
+        self.assertEqual(seen[0]["proxy"], "socks5h://user:pass@proxy.test:1080")
+        self.assertEqual(seen[0]["press_ms"], 6000)
+        self.assertIsNone(seen[0].get("sitekey"))
 
     def test_nonfinite_profile_is_a_validation_error(self):
         client = self.client()

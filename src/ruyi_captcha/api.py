@@ -13,11 +13,13 @@ from fastapi import Depends, FastAPI, Header, HTTPException, Query
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator
+from pydantic import (AliasChoices, BaseModel, ConfigDict, Field,
+                      field_validator, model_validator)
 
 from . import __version__
 from .errors import CaptchaError
 from .jobs import IdempotencyConflict, JobManager, QueueFull, TERMINAL, TaskNotFound
+from .proxy import ProxyError, parse_proxy
 from .runtime import check_runtime
 from .sdk import execute_task
 
@@ -47,15 +49,24 @@ class Settings:
 
 class SolveRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    type: Literal["turnstile"] = "turnstile"
+    type: Literal["turnstile", "perimeterx"] = "turnstile"
     site_url: str = Field(validation_alias=AliasChoices("site_url", "surl"), min_length=1, max_length=8192)
-    sitekey: str = Field(pattern=r"^[0-9A-Za-z_-]{16,255}$")
+    sitekey: str | None = Field(default=None, pattern=r"^[0-9A-Za-z_-]{16,255}$")
     action: str | None = Field(default=None, pattern=r"^[A-Za-z0-9_-]{1,32}$")
     cdata: str | None = Field(default=None, pattern=r"^[A-Za-z0-9_-]{1,255}$")
+    press_ms: int | None = Field(default=None, ge=500, le=15000, strict=True)
     timeout: float = Field(default=60, gt=0, le=120, allow_inf_nan=False, strict=True)
     attempts: int = Field(default=3, ge=1, le=3, strict=True)
     proxy: str | None = Field(default=None, max_length=4096)
     profile: Literal["linux", "default"] | dict[str, Any] | None = "linux"
+
+    @model_validator(mode="after")
+    def type_requirements(self):
+        if self.type == "turnstile" and not self.sitekey:
+            raise ValueError("sitekey is required for turnstile")
+        if self.type == "perimeterx" and self.press_ms is None:
+            self.press_ms = 6000
+        return self
 
     @field_validator("site_url")
     @classmethod
@@ -86,11 +97,10 @@ class SolveRequest(BaseModel):
     def valid_proxy(cls, value):
         if value is None:
             return value
-        parsed = urlsplit(value)
-        if parsed.scheme not in ("http", "https") or not parsed.hostname or any(ord(c) < 32 for c in value):
-            raise ValueError("proxy must be an HTTP(S) proxy URL")
-        if parsed.port is not None and not 0 < parsed.port < 65536:
-            raise ValueError("proxy port is invalid")
+        try:
+            parse_proxy(value)
+        except ProxyError as error:
+            raise ValueError(str(error)) from error
         return value
 
 
@@ -110,7 +120,7 @@ def create_app(settings=None, *, solver=execute_task, runtime_probe=check_runtim
             await asyncio.to_thread(manager.close)
 
     app = FastAPI(title="ruyi-captcha", version=__version__, lifespan=lifespan,
-                  description="Turnstile token acquisition. Backend acceptance remains the caller's responsibility.")
+                  description="Turnstile token and PerimeterX challenge-cookie acquisition. Backend acceptance remains the caller's responsibility.")
 
     @app.exception_handler(RequestValidationError)
     async def invalid_request(request, error):

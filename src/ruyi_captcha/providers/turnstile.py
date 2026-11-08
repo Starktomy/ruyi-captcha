@@ -12,6 +12,7 @@ from time import monotonic
 from typing import Any
 from urllib.parse import urlsplit, urlunsplit
 
+from ..proxy import proxy_context
 from ..runtime import create_context as Context, load_bindings, check_runtime
 from ..errors import CaptchaError, SolveCancelled
 
@@ -154,7 +155,7 @@ def _solve_once(site_url: str, sitekey: str, *, action: str | None, cdata: str |
     options = _render_options(sitekey, action, cdata)
 
     try:
-        with Context(shell=shell, timeout=min(30, timeout), proxy=proxy, tls="159") as context:
+        with proxy_context(Context, proxy, shell=shell, timeout=min(30, timeout), tls="159") as context:
             def request(method, *args, **kwargs):
                 if cancel_event is not None and cancel_event.is_set():
                     raise SolveCancelled()

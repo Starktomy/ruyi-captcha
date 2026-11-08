@@ -1,9 +1,9 @@
 # ruyi-captcha
 
 独立于 ff-ruyijs 内核的验证码应用层，提供 **Python 包**和 **HTTP API** 两种模式。
-首版支持 Cloudflare Turnstile 的 `site_url + sitekey` 求解，包含 action/cData、
-代理、超时、重试和交互 checkbox 处理。其他验证码类型可在 `providers/` 扩展，
-当前版本不会把尚未实现的类型标记为可用。
+当前支持 Cloudflare Turnstile 的 `site_url + sitekey` 求解，以及 PerimeterX/HUMAN
+按压挑战。两类求解都支持代理、超时和重试；Turnstile 另支持 action/cData 和交互
+checkbox。其他验证码类型可在 `providers/` 扩展，当前版本不会把尚未实现的类型标记为可用。
 
 ## 安装
 
@@ -82,6 +82,63 @@ print(details.elapsed, details.attempts)
   '0x4AAAAAADogn3t3_JKwKkgS' --timeout 30 --attempts 1
 ```
 
+## PerimeterX（HUMAN）按压挑战
+
+```python
+from ruyi_captcha import solve_perimeterx, solve_perimeterx_details
+
+px3 = solve_perimeterx(
+    "https://www.walmart.com/blocked",       # 直接提供挑战的页面，不要传外层 demo iframe
+    proxy="socks5h://user:pass@proxy.example:7878",
+    press_ms=6000,
+    timeout=120,
+    attempts=2,
+)
+# px3 是 _px3 cookie 的值；把 _px3（或 details.cookies）提交给业务流程。
+
+details = solve_perimeterx_details(
+    "https://www.walmart.com/blocked",
+    proxy="socks5h://user:pass@proxy.example:7878",
+    press_ms=6000,
+)
+print(details.cookies["_px3"], details.verified, details.elapsed)
+```
+
+求解器会导航到目标页，在 light DOM、closed shadow root 和同源挑战 iframe 中定位
+`Press & Hold` 控件，发送可信 pointer/mouse 输入并等待服务端状态。返回的
+`verification_status` 是 `challenge_accepted`；`_px3` 仍需要由业务端提交并以后端
+回执为准，本库不会仅凭本地页面状态声称业务验证成功。
+
+Walmart/NopeCHA 当前使用的 PX v2.9.8 会把 Metrics 事件落在自己的 B3 队列之外。
+应用层为这个构建安装了一个只追加 `NS4Fa3BCClk=` 的兼容 hook（`en` 为空，服务端
+实测接受）；其他 PX 构建可能不需要该 hook，或需要更新模板。挑战通常依赖住宅出口，
+请使用可用代理并在失败时更换出口重试。
+
+命令行：
+
+```sh
+.venv/bin/ruyi-captcha perimeterx 'https://www.walmart.com/blocked' \
+  --proxy 'socks5h://user:pass@proxy.example:7878' --press-ms 6000 --timeout 120
+```
+
+## 代理
+
+Turnstile 和 PerimeterX 的 `proxy` 参数支持以下形式：
+
+- `http://host:port` / `https://host:port`：原样交给 ff-ruyijs Necko。
+- `socks5://host:port` / `socks5h://host:port`：ruyi-captcha 在 `127.0.0.1` 启动一个
+  仅本次求解使用的 HTTP CONNECT 桥，把 ff-ruyijs 的 HTTP 代理连接转发到 SOCKS5
+  上游。`socks5h` 由上游解析目标域名；`socks5` 在本地解析。用户名密码可写在 URL 中。
+- 桥只监听 loopback，随 Context 关闭；HTTP(S) 代理不额外起桥。
+
+```python
+solve_turnstile(..., proxy="socks5h://user:pass@proxy.example:7878")
+solve_perimeterx(..., proxy="socks5h://user:pass@proxy.example:7878")
+```
+
+HTTP API 的 `proxy` 字段同样接受以上四种 scheme。代理凭据不会写入任务结果或错误
+消息。
+
 ## 多环境生成器
 
 旧 fork 的 `b014478` 生成器已迁入本仓库，保持内核只负责应用 profile。
@@ -138,6 +195,18 @@ curl -X POST 'http://127.0.0.1:8000/v1/solve?wait_timeout=30' \
   -d '{"type":"turnstile","site_url":"https://capskip.com/captcha-demo/cloudflare-turnstile/","sitekey":"0x4AAAAAADogn3t3_JKwKkgS","timeout":30,"attempts":1}'
 ```
 
+PerimeterX 请求使用 `type=perimeterx`，不需要 `sitekey`：
+
+```sh
+curl -X POST 'http://127.0.0.1:8000/v1/solve?wait_timeout=60' \
+  -H "Authorization: Bearer $RUYI_CAPTCHA_API_KEY" \
+  -H 'Content-Type: application/json' \
+  -d '{"type":"perimeterx","site_url":"https://www.walmart.com/blocked","press_ms":6000,"timeout":120,"attempts":2,"proxy":"socks5h://user:pass@proxy.example:7878"}'
+```
+
+PerimeterX 结果的 `result.token` 是 `_px3` 的值，另有 `result.cookies`、
+`result.verified` 和 `verification_status=challenge_accepted`。
+
 完成时返回 HTTP 200 和任务对象，token 位于 `result.token`。
 超过等待时间仍在执行时返回 HTTP 202；使用返回的 `id` 继续查询。
 任务失败时检查 `status=failed` 和 `error.code`，不能仅按 HTTP 200 判断验证码成功。
@@ -172,6 +241,12 @@ token = client.solve_turnstile(
     "https://capskip.com/captcha-demo/cloudflare-turnstile/",
     "0x4AAAAAADogn3t3_JKwKkgS",
     timeout=30, attempts=1, wait_timeout=90,
+)
+
+px3 = client.solve_perimeterx(
+    "https://www.walmart.com/blocked",
+    proxy="socks5h://user:pass@proxy.example:7878",
+    press_ms=6000, timeout=120, wait_timeout=180,
 )
 ```
 

@@ -44,10 +44,13 @@ class ApiClient:
         except (urllib.error.URLError, TimeoutError) as error:
             raise CaptchaError(f"API request failed: {error}", code="transport_error") from error
 
-    def submit(self, site_url=None, sitekey=None, *, surl=None, idempotency_key=None,
-               _request_timeout=None, **options):
-        return self._request("POST", "/v1/tasks", {"type": "turnstile",
-            "site_url": _url(site_url, surl), "sitekey": sitekey, **options},
+    def submit(self, site_url=None, sitekey=None, *, surl=None, kind="turnstile",
+               idempotency_key=None, _request_timeout=None, **options):
+        payload = {"type": kind, "site_url": _url(site_url, surl)}
+        if sitekey is not None:
+            payload["sitekey"] = sitekey
+        payload.update(options)
+        return self._request("POST", "/v1/tasks", payload,
             idempotency_key=idempotency_key, timeout=_request_timeout)
 
     def get(self, task_id):
@@ -56,13 +59,10 @@ class ApiClient:
     def cancel(self, task_id, *, _request_timeout=None):
         return self._request("DELETE", "/v1/tasks/" + task_id, timeout=_request_timeout)
 
-    def solve_turnstile_details(self, site_url=None, sitekey=None, *, surl=None,
-                               wait_timeout=200, idempotency_key=None, **options):
+    def _wait(self, task, wait_timeout):
         if not math.isfinite(wait_timeout) or wait_timeout <= 0:
             raise ValueError("wait_timeout must be positive")
         deadline = time.monotonic() + wait_timeout
-        task = self.submit(site_url, sitekey, surl=surl, idempotency_key=idempotency_key,
-                           _request_timeout=min(self.request_timeout, wait_timeout), **options)
         while True:
             if task["status"] == "succeeded":
                 return task["result"]
@@ -81,5 +81,28 @@ class ApiClient:
             if remaining > 0:
                 task = self._request("GET", "/v1/tasks/" + task["id"], timeout=min(self.request_timeout, remaining))
 
+    def solve_turnstile_details(self, site_url=None, sitekey=None, *, surl=None,
+                               wait_timeout=200, idempotency_key=None, **options):
+        if not math.isfinite(wait_timeout) or wait_timeout <= 0:
+            raise ValueError("wait_timeout must be positive")
+        task = self.submit(site_url, sitekey, surl=surl, kind="turnstile",
+                           idempotency_key=idempotency_key,
+                           _request_timeout=min(self.request_timeout, wait_timeout),
+                           **options)
+        return self._wait(task, wait_timeout)
+
+    def solve_perimeterx_details(self, site_url=None, *, surl=None,
+                                 wait_timeout=200, idempotency_key=None, **options):
+        if not math.isfinite(wait_timeout) or wait_timeout <= 0:
+            raise ValueError("wait_timeout must be positive")
+        task = self.submit(site_url, surl=surl, kind="perimeterx",
+                           idempotency_key=idempotency_key,
+                           _request_timeout=min(self.request_timeout, wait_timeout),
+                           **options)
+        return self._wait(task, wait_timeout)
+
     def solve_turnstile(self, site_url=None, sitekey=None, **options):
         return self.solve_turnstile_details(site_url, sitekey, **options)["token"]
+
+    def solve_perimeterx(self, site_url=None, **options):
+        return self.solve_perimeterx_details(site_url, **options)["token"]

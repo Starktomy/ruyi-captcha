@@ -148,7 +148,10 @@ class JobManager:
                 parameters = job.parameters
             solution = self.solver(parameters, job.cancel)
             result = asdict(solution) if is_dataclass(solution) else dict(solution)
-            result.update(type=parameters.get("type", "turnstile"), verification_status="token_obtained")
+            task_type = parameters.get("type", "turnstile")
+            result.update(type=task_type,
+                          verification_status=("challenge_accepted" if task_type == "perimeterx"
+                                               else "token_obtained"))
             if "token" in result:
                 result["token_length"] = len(result["token"])
             with self._lock:

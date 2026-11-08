@@ -5,6 +5,7 @@ from typing import Any, TYPE_CHECKING
 from .errors import CaptchaError
 
 if TYPE_CHECKING:
+    from .providers.perimeterx import PerimeterXSolution
     from .providers.turnstile import TurnstileSolution
 
 
@@ -33,10 +34,35 @@ def solve_turnstile(site_url=None, sitekey=None, *, surl=None, **options):
     return solve_turnstile_details(site_url, sitekey, surl=surl, **options).token
 
 
+def solve_perimeterx_details(site_url: str, *, press_ms: int = 6000,
+                             timeout: float = 90, attempts: int = 3,
+                             proxy: str | None = None,
+                             profile: dict[str, Any] | str | None = "linux",
+                             shell: str | Path | None = None,
+                             _cancel_event=None) -> "PerimeterXSolution":
+    """Return the accepted PerimeterX ``_px3`` cookie and timing details."""
+    from .providers.perimeterx import solve_perimeterx_details as run
+    return run(site_url, press_ms=press_ms, timeout=timeout, attempts=attempts,
+               proxy=proxy, profile=profile, shell=shell,
+               _cancel_event=_cancel_event)
+
+
+def solve_perimeterx(site_url: str, **options):
+    return solve_perimeterx_details(site_url, **options).token
+
+
 def solve(task_type="turnstile", **parameters):
-    if task_type != "turnstile":
-        raise CaptchaError(f"Unsupported captcha type: {task_type}", code="unsupported_type")
-    return solve_turnstile_details(**parameters)
+    if task_type == "turnstile":
+        allowed = {"site_url", "sitekey", "action", "cdata", "timeout",
+                   "attempts", "poll_ms", "proxy", "profile", "shell"}
+        return solve_turnstile_details(**{key: value for key, value in parameters.items()
+                                          if key in allowed})
+    if task_type == "perimeterx":
+        allowed = {"site_url", "press_ms", "timeout", "attempts", "proxy",
+                   "profile", "shell"}
+        return solve_perimeterx_details(**{key: value for key, value in parameters.items()
+                                           if key in allowed})
+    raise CaptchaError(f"Unsupported captcha type: {task_type}", code="unsupported_type")
 
 
 def execute_task(parameters, cancel_event):

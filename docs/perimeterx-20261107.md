@@ -1,3 +1,10 @@
+> **2026-11-08 update:** `src/ruyi_captcha/providers/perimeterx.py` now exposes
+> `solve_perimeterx` / `solve_perimeterx_details`, and the SDK/API/CLI accept
+> `type=perimeterx`. The provider installs the page-side `NS4Fa3BCClk=`
+> compatibility hook used by the successful ff-ruyijs run and supports
+> HTTP(S) and SOCKS5/SOCKS5h proxies. The historical diagnostic conclusions
+> below still apply to the probe and to builds that predate that provider.
+
 # 2026-11-07：PerimeterX 排查与真实验证
 
 **ff-ruyijs 尚未通过这个挑战。** 已修复五个可独立复现的浏览器兼容问题，完善诊断工具，
