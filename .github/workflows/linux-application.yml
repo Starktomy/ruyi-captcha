@@ -1,0 +1,98 @@
+name: Linux application wheel
+
+on:
+  workflow_call:
+    inputs:
+      kernel_run_id:
+        type: string
+        default: ""
+  workflow_dispatch:
+    inputs:
+      kernel_run_id:
+        description: Run containing a successful ruyijs-linux artifact for the locked kernel
+        type: string
+        required: true
+
+permissions:
+  contents: read
+  actions: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  bundled-linux:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check the artifact's kernel source pin
+        env:
+          GH_TOKEN: ${{ github.token }}
+          KERNEL_RUN_ID: ${{ inputs.kernel_run_id || github.run_id }}
+        run: |
+          artifact_ref=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$KERNEL_RUN_ID" --jq .head_sha)
+          gh api "repos/$GITHUB_REPOSITORY/contents/src/ruyi_captcha/runtime-lock.json?ref=$artifact_ref" \
+            -H 'Accept: application/vnd.github.raw+json' > "$RUNNER_TEMP/artifact-kernel-lock.json"
+          python - "$RUNNER_TEMP/artifact-kernel-lock.json" <<'PY'
+          import json, sys
+          from pathlib import Path
+          actual = json.loads(Path(sys.argv[1]).read_text())
+          expected = json.loads(Path('src/ruyi_captcha/runtime-lock.json').read_text())
+          assert (actual['commit'], actual['version']) == (expected['commit'], expected['version']), 'Kernel source pin mismatch'
+          print('Kernel source pin:', actual['commit'])
+          PY
+      - uses: actions/download-artifact@v4
+        with:
+          name: ruyijs-linux
+          path: kernel-artifact
+          run-id: ${{ inputs.kernel_run_id || github.run_id }}
+          github-token: ${{ github.token }}
+      - run: python -m pip install build 'setuptools>=77' 'packaging>=24.2' wheel
+      - name: Embed the kernel and install the application wheel
+        run: python ci/package_bundled.py
+      - name: Verify the bundled Linux ABI
+        run: python -B ci/check_linux_wheel.py dist/bundled/*.whl --glibc 2.36
+      - name: Verify the self-contained installation
+        working-directory: ${{ runner.temp }}
+        run: |
+          python "$GITHUB_WORKSPACE/ci/verify_wheel.py" --kind bundled
+          python -B -m unittest discover -s "$GITHUB_WORKSPACE/tests" -v
+      - uses: actions/upload-artifact@v4
+        with:
+          name: application-bundled-linux
+          path: dist/bundled/*.whl
+          if-no-files-found: error
+
+  linux-compatibility:
+    needs: bundled-linux
+    runs-on: ubuntu-24.04
+    container: ${{ matrix.image }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ["debian:12-slim", "ubuntu:26.04"]
+    steps:
+      - name: Distribution Python and fonts
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq --no-install-recommends \
+            ca-certificates git python3 python3-venv fontconfig fonts-dejavu-core fonts-liberation
+          getconf GNU_LIBC_VERSION
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: application-bundled-linux
+          path: wheelhouse
+      - name: Install and verify the same bundled wheel
+        working-directory: /tmp
+        run: |
+          unset PYTHONPATH RUYIJS_SHELL LD_LIBRARY_PATH
+          python3 -m venv /tmp/wheel-test
+          /tmp/wheel-test/bin/python -m pip install "$GITHUB_WORKSPACE"/wheelhouse/*.whl
+          /tmp/wheel-test/bin/python "$GITHUB_WORKSPACE/ci/verify_wheel.py" --kind bundled

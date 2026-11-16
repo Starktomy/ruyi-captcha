@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: release-${{ github.ref }}
@@ -67,14 +68,16 @@ jobs:
     with:
       kernel_ref: ${{ needs.prepare.outputs.kernel_ref }}
 
+  linux-application:
+    needs: kernel-linux
+    uses: ./.github/workflows/linux-application.yml
+
   bundled:
-    needs: [prepare, kernel-linux, kernel-windows, kernel-macos]
+    needs: [prepare, kernel-windows, kernel-macos]
     strategy:
       fail-fast: false
       matrix:
         include:
-          - platform: linux
-            runner: ubuntu-24.04
           - platform: windows
             runner: windows-2025
           - platform: macos
@@ -95,9 +98,6 @@ jobs:
       - run: python -m pip install build 'setuptools>=77' 'packaging>=24.2' wheel
       - name: Embed the compiled kernel and install the resulting application wheel
         run: python ci/package_bundled.py
-      - name: Verify the bundled Linux ABI
-        if: matrix.platform == 'linux'
-        run: python -B ci/check_linux_wheel.py dist/bundled/*.whl --glibc 2.36
       - name: Verify the self-contained installation without an external ruyijs package
         working-directory: ${{ runner.temp }}
         run: |
@@ -109,41 +109,9 @@ jobs:
           path: dist/bundled/*.whl
           if-no-files-found: error
 
-  linux-compatibility:
-    needs: bundled
-    runs-on: ubuntu-24.04
-    container: ${{ matrix.image }}
-    timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix:
-        image: ["debian:12-slim", "ubuntu:26.04"]
-    defaults:
-      run:
-        shell: bash
-    steps:
-      - name: Distribution Python and fonts
-        run: |
-          apt-get update -qq
-          apt-get install -y -qq --no-install-recommends \
-            ca-certificates git python3 python3-venv fontconfig fonts-dejavu-core fonts-liberation
-          getconf GNU_LIBC_VERSION
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
-        with:
-          name: application-bundled-linux
-          path: wheelhouse
-      - name: Install and verify the same bundled wheel
-        working-directory: /tmp
-        run: |
-          unset PYTHONPATH RUYIJS_SHELL LD_LIBRARY_PATH
-          python3 -m venv /tmp/wheel-test
-          /tmp/wheel-test/bin/python -m pip install "$GITHUB_WORKSPACE"/wheelhouse/*.whl
-          /tmp/wheel-test/bin/python "$GITHUB_WORKSPACE/ci/verify_wheel.py" --kind bundled
-
   publish:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [lightweight, bundled, linux-compatibility]
+    needs: [lightweight, bundled, linux-application]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
