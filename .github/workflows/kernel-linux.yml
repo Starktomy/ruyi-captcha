@@ -66,6 +66,16 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE/kernel"
           git config --global --add safe.directory "$GITHUB_WORKSPACE/kernel/firefox"
 
+      - name: Apply Linux build tooling compatibility
+        run: |
+          # Cargo 1.100 changed its internal directory layout. Keep the pinned
+          # runtime sources and use JSON artifact paths in its Linux builder.
+          if [ ! -f tools/cargo_artifacts.py ]; then
+            git apply --check ../ci/patches/kernel-linux-cargo-artifacts.patch
+            git apply ../ci/patches/kernel-linux-cargo-artifacts.patch
+            cp ../ci/cargo_artifacts.py tools/cargo_artifacts.py
+          fi
+
       - name: Runner facts
         run: |
           echo "CPUs: $(nproc)  RAM: $(( $(awk '/MemTotal/ {print $2}' /proc/meminfo) / 1048576 )) GB"

@@ -1,0 +1,38 @@
+diff --git a/tools/build_linux.py b/tools/build_linux.py
+index 54afb6b..66737d2 100644
+--- a/tools/build_linux.py
++++ b/tools/build_linux.py
+@@ -15,6 +15,7 @@ from donor import Donor
+ from native import Native
+ import urlpattern_native
+ import rust_runtime
++from cargo_artifacts import target_rlibs
+ 
+ 
+ def build_urlpattern(root, donor, build):
+@@ -52,21 +53,19 @@ def build_urlpattern(root, donor, build):
+     rustc = rustc[0] if isinstance(rustc, list) else rustc
+     cargo = cargo[0] if isinstance(cargo, list) else cargo
+     environment = dict(os.environ, RUSTC=rustc)
+-    subprocess.run([cargo, "build", "--release", "--offline", "--locked",
++    completed = subprocess.run([cargo, "build", "--release", "--offline", "--locked",
++                    "--target", donor.rust_target, "--message-format=json-render-diagnostics",
+                     "--manifest-path", str(directory / "Cargo.toml"),
+                     "--target-dir", str(directory / "target"),
+                     "--config", "source.crates-io.replace-with='donor'",
+                     "--config", "source.donor.directory=" + json.dumps(str(mirror))],
+-                   check=True, cwd=directory, env=environment)
++                   check=True, cwd=directory, env=environment, stdout=subprocess.PIPE, text=True)
++    libraries = target_rlibs(completed.stdout, directory / "target" / donor.rust_target / "release")
+     # The donor already owns Rust's allocator and standard runtime. Combining
+     # the crate rlibs avoids a second std/init array from a Rust staticlib.
+     archive = directory / "target/release/libruyijs_urlpattern.a"
+-    members = sorted((directory / "target/release/deps").glob("*.rlib"))
+-    if archive.is_file() and all(p.stat().st_mtime_ns <= archive.stat().st_mtime_ns for p in members):
+-        return
+     if archive.exists():
+         archive.unlink()
+-    libraries = sorted((directory / "target/release/deps").glob("*.rlib"))
+     script = "CREATE " + str(archive) + "\n" + "".join("ADDLIB " + str(path) + "\n" for path in libraries) + "SAVE\nEND\n"
+     subprocess.run(["ar", "-M"], input=script, text=True, check=True)
+ 

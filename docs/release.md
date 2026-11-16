@@ -41,6 +41,11 @@ Debian 12 的 HarfBuzz 6 缺少内核字体实现需要的 synthetic-bold API，
 Brotli 头文件目录，避免内部引用落到系统旧版头文件；这些属于构建依赖和参数，
 不改变 `runtime-lock.json` 锁定的内核源码提交。
 
+Cargo 1.100 改变了内部构建目录，旧内核按目录搜索 rlib 会生成空的 URLPattern 库。
+Linux 工作流显式应用 `ci/patches/kernel-linux-cargo-artifacts.patch`，并提供
+`ci/cargo_artifacts.py`，让构建器读取 Cargo JSON 的实际产物路径；补丁只修改
+`tools/build_linux.py`，不修改原生运行时源码。已有该修复的内核无需再次应用。
+
 两个干净容器使用各自发行版的 Python 安装同一个应用 wheel，发布任务依赖这两项
 检查成功。此处描述的是新的 CI 配置；完整原生构建与双系统结果须由实际工作流确认。
 
