@@ -60,6 +60,12 @@ jobs:
           path: kernel
           persist-credentials: false
 
+      - name: Trust the checked-out repositories in the container
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/kernel"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/kernel/firefox"
+
       - name: Runner facts
         run: |
           echo "CPUs: $(nproc)  RAM: $(( $(awk '/MemTotal/ {print $2}' /proc/meminfo) / 1048576 )) GB"
