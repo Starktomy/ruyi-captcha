@@ -142,12 +142,31 @@ jobs:
           path: kernel/obj/js-linux
           key: ${{ steps.donor.outputs.cache-primary-key }}
 
+      - name: Restore native runtime
+        id: shell
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            kernel/dist/js
+            kernel/dist/libruyijs_client.so
+          key: native-shell-linux-bookworm-glibc236-${{ steps.toolchain.outputs.hash }}-${{ steps.firefox.outputs.sha }}-${{ hashFiles('kernel/src/**', 'kernel/tools/**', 'kernel/profiles/**', 'kernel/vendor/*-native/**', 'kernel/CMakeLists.txt', 'kernel/pyproject.toml', 'ci/build_linux_harfbuzz.sh') }}
+
       - name: Build dist/js and libruyijs_client.so
+        if: steps.shell.outputs.cache-hit != 'true'
         run: |
           # The pinned checkout's CMake omits this vendor include directory;
           # its Brotli headers must resolve each other, not bookworm's v1.0.9.
           export CXXFLAGS="-I$GITHUB_WORKSPACE/kernel/vendor/compression-native/brotli/include ${CXXFLAGS:-}"
           ci/linux/build.sh shell
+
+      - name: Save native runtime
+        if: steps.shell.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            kernel/dist/js
+            kernel/dist/libruyijs_client.so
+          key: ${{ steps.shell.outputs.cache-primary-key }}
 
       - name: Restore NSS and Neqo builds
         id: necko
@@ -159,7 +178,11 @@ jobs:
           key: necko-linux-bookworm-glibc236-${{ steps.toolchain.outputs.hash }}-${{ steps.firefox.outputs.sha }}-${{ hashFiles('kernel/runtime.json', 'kernel/tools/build_necko_linux.py', 'kernel/tools/build_neqo_linux.py', 'kernel/native/necko_posix/**') }}
 
       - name: Build the Necko helper
-        run: ci/linux/build.sh necko
+        run: |
+          # NSS's own dependencies are siblings, and its old RUNPATH is not
+          # transitive. The final bundler sets every ELF's relative RUNPATH.
+          export LD_LIBRARY_PATH="$GITHUB_WORKSPACE/kernel/vendor/necko-derived/python/lib/python3.14/site-packages/necko${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+          ci/linux/build.sh necko
 
       - name: Save NSS and Neqo builds
         if: steps.necko.outputs.cache-hit != 'true'
