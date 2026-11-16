@@ -22,7 +22,9 @@ ruyi-captcha serve --host 127.0.0.1 --port 8000
 ```
 
 包模式只需安装 wheel；`[api]` 额外安装 HTTP 服务依赖。
-Linux 发版在 Ubuntu 24.04 构建，要求 glibc 2.39+；macOS arm64 要求 macOS 26+。
+Linux 发版 CI 使用 Debian 12 编译环境，目标为 `manylinux_2_36_x86_64`，
+并在 Debian 12 和 Ubuntu 26.04 安装测试同一份 wheel；macOS arm64 要求 macOS 26+。
+新 CI 产物需经完整构建与两个系统的测试验收，已有下载文件不会自动获得更低的兼容基线。
 本机生成的 Linux wheel 标为 `manylinux_2_43_x86_64`，它对应本机 glibc 2.43，
 应按 wheel 文件自己的平台标记选择安装环境。
 

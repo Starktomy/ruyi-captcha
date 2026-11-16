@@ -11,7 +11,8 @@ GitHub Releases。也可以手动运行 Release wheels 工作流生成 artifact�
 4. 分别构建 Windows x64、Linux x86_64 和 macOS arm64 kernel wheel。
 5. 将每个平台的 kernel wheel 嵌入 ruyi-captcha 平台 wheel。
 6. 安装应用 wheel，确认未安装外部 `ruyijs`，运行能力检查、API 启动和离线回归。
-7. 所有平台成功后，生成 SHA256SUMS 与 release-manifest.json，并附加到 GitHub Release。
+7. 将同一份 Linux 内置内核 wheel 安装到 Debian 12 和 Ubuntu 26.04，验证内核能力。
+8. 所有平台与两项 Linux 安装测试成功后，生成 SHA256SUMS 与 release-manifest.json，并附加到 GitHub Release。
 
 产物为一份源码包与四份 wheel：
 
@@ -19,13 +20,28 @@ GitHub Releases。也可以手动运行 Release wheels 工作流生成 artifact�
 | --- | --- |
 | `ruyi_captcha-V-py3-none-any.whl` | 轻量应用与远程客户端 |
 | `ruyi_captcha-V-py3-none-win_amd64.whl` | Windows x64 内置内核 |
-| `ruyi_captcha-V-py3-none-manylinux_2_39_x86_64.whl` | Linux x86_64，glibc 2.39+ |
+| `ruyi_captcha-V-py3-none-manylinux_2_36_x86_64.whl` | Linux x86_64，glibc 2.36+；Debian 12 / Ubuntu 26.04 |
 | `ruyi_captcha-V-py3-none-macosx_26_0_arm64.whl` | macOS 26+ Apple Silicon |
 | `ruyi_captcha-V.tar.gz` | 应用源码、构建工具和测试；默认构建轻量包 |
 
 CI 只在版本 tag 和手动触发时编译全部原生内核；日常 push/PR 运行普通 Python CI。
 发版不会自动跟随 kernel/main 漂移。升级内核时先更新 runtime-lock.json 中的提交和
 能力要求，完成验收，再发布新应用版本。失败的任一平台会阻止发布残缺的 release。
+
+Linux 的 Firefox donor、原生库、NSS/Neqo 和内置 Python 3.14 都在
+`python:3.14-bookworm` 中编译，缓存键包含 bookworm/glibc236，避免恢复来自 Ubuntu
+24.04 的旧二进制。打包器沿用内核 wheel 的平台标签；内核和应用 wheel 均检查所有
+ELF 的 glibc 版本需求、依赖是否随包提供，以及动态库路径是否可重定位。只修改旧包
+的文件名或标签不能得到 Debian 12 兼容性。`ci/check_linux_wheel.py` 与内核仓库的
+`ci/linux/check_wheel_abi.py` 保持同一实现，让旧的锁定内核也能接受新 CI 的检查。
+
+两个干净容器使用各自发行版的 Python 安装同一个应用 wheel，发布任务依赖这两项
+检查成功。此处描述的是新的 CI 配置；完整原生构建与双系统结果须由实际工作流确认。
+
+2026-11-16 的本地验证包括全部 85 项应用测试、actionlint，以及 Debian 12 和
+Ubuntu 26.04 容器各 6 项真实 ELF 夹具检查（包括 DT_RELR 对 glibc 2.36 的要求）；同一份 Debian 编译的 C 测试库在两个
+容器均返回 42。夹具结果不代表完整内核 wheel 已在两端验收，本次未触发远端发布
+工作流，内核锁定提交也未改变。
 
 ## 包内结构
 

@@ -25,7 +25,7 @@ def main():
             stream.write("kernel_ref="+lock["commit"]+"\n")
     if args.assets:
         assets = sorted(path for path in args.assets.iterdir() if path.suffix == ".whl" or path.name.endswith(".tar.gz"))
-        expected = ("-any.whl", "-win_amd64.whl", "-macosx_26_0_arm64.whl", "-manylinux_2_39_x86_64.whl", ".tar.gz")
+        expected = ("-any.whl", "-win_amd64.whl", "-macosx_26_0_arm64.whl", "-manylinux_2_36_x86_64.whl", ".tar.gz")
         for suffix in expected:
             if sum(path.name.endswith(suffix) for path in assets) != 1:
                 raise SystemExit("Missing or duplicate release artifact: "+suffix)

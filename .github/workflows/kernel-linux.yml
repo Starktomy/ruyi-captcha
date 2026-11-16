@@ -1,12 +1,12 @@
 # Adapted from ff-ruyijs b9877c4; compile its pinned checkout with its own build scripts.
 name: Pinned kernel (Linux)
 
-# Builds ruyijs for Linux x86_64 on Ubuntu 24.04 from the official Firefox
+# Builds the pinned kernel in Debian 12 from the official Firefox
 # release in the firefox/ submodule: SpiderMonkey, Skia and NSS/NSPR come from
 # that source tree, libnecko_core/libnecko_quic from native/necko_posix against
 # that NSS. Every `run:` is one ci/linux/build.sh step; that script lists what
-# each step builds and needs. Ubuntu 24.04 has glibc 2.39, so the wheel is
-# tagged manylinux_2_39_x86_64. Called by wheels.yml; can also run on its own.
+# each step builds and needs. Every native component, including Python 3.14,
+# uses glibc 2.36. The source pin remains controlled by runtime-lock.json.
 on:
   workflow_call:
     inputs:
@@ -26,34 +26,44 @@ permissions:
 defaults:
   run:
     shell: bash
+    working-directory: kernel
 
 jobs:
   ruyijs-linux:
     name: ruyijs (Linux x86_64)
     runs-on: ubuntu-24.04
+    container: python:3.14-bookworm
     timeout-minutes: 300
     env:
       CC: clang-21
       CXX: clang++-21
     steps:
-      - name: Runner facts
+      - name: Debian build prerequisites
+        working-directory: /
         run: |
-          echo "CPUs: $(nproc)  RAM: $(( $(awk '/MemTotal/ {print $2}' /proc/meminfo) / 1048576 )) GB"
-          df -h "$GITHUB_WORKSPACE"
+          apt-get update -qq
+          apt-get install -y -qq --no-install-recommends \
+            ca-certificates curl git gnupg lsb-release sudo python3 python3-venv \
+            fontconfig fonts-dejavu-core fonts-liberation
+          . /etc/os-release
+          test "$VERSION_ID" = 12
+          test "$(getconf GNU_LIBC_VERSION)" = "glibc 2.36"
+          python3 --version
+          /usr/bin/python3 --version
 
-      # The Firefox checkout (4.9 GB), obj/js-linux (2 GB) and build/ (1 GB)
-      # do not fit the space the image leaves free.
-      - name: Free disk space
-        run: |
-          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /usr/local/.ghcup \
-            /opt/hostedtoolcache/CodeQL
-          df -h "$GITHUB_WORKSPACE"
+      - uses: actions/checkout@v4
 
       - uses: actions/checkout@v4
         with:
           repository: Starktomy/ff-ruyijs
           ref: ${{ inputs.kernel_ref }}
+          path: kernel
           persist-credentials: false
+
+      - name: Runner facts
+        run: |
+          echo "CPUs: $(nproc)  RAM: $(( $(awk '/MemTotal/ {print $2}' /proc/meminfo) / 1048576 )) GB"
+          df -h "$GITHUB_WORKSPACE"
 
       - name: Fetch Firefox (the submodule commit only)
         id: firefox
@@ -69,23 +79,24 @@ jobs:
           git -C firefox -c checkout.workers=0 checkout -q --detach FETCH_HEAD
           git -C firefox log -1 --format='%H %cI'
 
-      # build_necko_linux.py runs on, and the wheel bundles, Python 3.14. The
-      # SpiderMonkey configure and the wheel test use the distribution 3.12.
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.14"
+      - uses: dtolnay/rust-toolchain@stable
 
       - name: Restore cbindgen
         uses: actions/cache@v4
         with:
           path: ~/.cargo/bin/cbindgen
-          key: cbindgen-0.29.4-linux
+          key: cbindgen-0.29.4-linux-bookworm-glibc236
 
       - name: Toolchain and libraries
+        id: toolchain
         run: |
           ci/linux/build.sh deps
           # NSS's build.sh runs plain `clang`; this also puts LLVM 21's tools first.
           echo "/usr/lib/llvm-21/bin" >> "$GITHUB_PATH"
+          {
+            rustc -vV
+            clang-21 --version
+          } | sha256sum | awk '{print "hash=" substr($1,1,16)}' >> "$GITHUB_OUTPUT"
 
       # Besides the Firefox commit, the objdir depends only on the donor step of
       # build.sh (its configure options), so changes to the other steps keep it.
@@ -100,8 +111,8 @@ jobs:
         id: donor
         uses: actions/cache/restore@v4
         with:
-          path: obj/js-linux
-          key: firefox-js-linux-${{ steps.firefox.outputs.sha }}-${{ steps.donor-config.outputs.hash }}
+          path: kernel/obj/js-linux
+          key: firefox-js-linux-bookworm-glibc236-${{ steps.toolchain.outputs.hash }}-${{ steps.firefox.outputs.sha }}-${{ steps.donor-config.outputs.hash }}
 
       - name: Build SpiderMonkey
         if: steps.donor.outputs.cache-hit != 'true'
@@ -111,7 +122,7 @@ jobs:
         if: steps.donor.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
-          path: obj/js-linux
+          path: kernel/obj/js-linux
           key: ${{ steps.donor.outputs.cache-primary-key }}
 
       - name: Build dist/js and libruyijs_client.so
@@ -122,9 +133,9 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: |
-            build/necko
-            build/necko-quic
-          key: necko-linux-${{ steps.firefox.outputs.sha }}-${{ hashFiles('runtime.json', 'tools/build_necko_linux.py', 'tools/build_neqo_linux.py', 'native/necko_posix/**') }}
+            kernel/build/necko
+            kernel/build/necko-quic
+          key: necko-linux-bookworm-glibc236-${{ steps.toolchain.outputs.hash }}-${{ steps.firefox.outputs.sha }}-${{ hashFiles('kernel/runtime.json', 'kernel/tools/build_necko_linux.py', 'kernel/tools/build_neqo_linux.py', 'kernel/native/necko_posix/**') }}
 
       - name: Build the Necko helper
         run: ci/linux/build.sh necko
@@ -134,12 +145,15 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: |
-            build/necko
-            build/necko-quic
+            kernel/build/necko
+            kernel/build/necko-quic
           key: ${{ steps.necko.outputs.cache-primary-key }}
 
       - name: Build the wheel
         run: ci/linux/build.sh wheel
+
+      - name: Verify every bundled ELF and the wheel tag
+        run: python3 -B ../ci/check_linux_wheel.py wheelhouse/*.whl --glibc 2.36
 
       - name: Test the installed wheel
         run: ci/linux/build.sh test
@@ -151,12 +165,11 @@ jobs:
           du -sh firefox obj/* build/* vendor/necko-derived 2>/dev/null || true
 
       - name: Upload the wheel
-        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ruyijs-linux
-          path: wheelhouse/*.whl
-          if-no-files-found: ignore
+          path: kernel/wheelhouse/*.whl
+          if-no-files-found: error
           retention-days: 14
 
       - name: Upload logs on failure
@@ -165,8 +178,8 @@ jobs:
         with:
           name: ruyijs-linux-logs
           path: |
-            obj/js-linux/config.log
-            build/linux/CMakeFiles/CMakeConfigureLog.yaml
-            build/linux/.ninja_log
+            kernel/obj/js-linux/config.log
+            kernel/build/linux/CMakeFiles/CMakeConfigureLog.yaml
+            kernel/build/linux/.ninja_log
           if-no-files-found: ignore
           retention-days: 7
