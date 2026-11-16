@@ -35,6 +35,12 @@ ELF 的 glibc 版本需求、依赖是否随包提供，以及动态库路径是
 的文件名或标签不能得到 Debian 12 兼容性。`ci/check_linux_wheel.py` 与内核仓库的
 `ci/linux/check_wheel_abi.py` 保持同一实现，让旧的锁定内核也能接受新 CI 的检查。
 
+Debian 12 的 HarfBuzz 6 缺少内核字体实现需要的 synthetic-bold API，Linux 流水线
+通过 `ci/build_linux_harfbuzz.sh` 编译固定 SHA-256 的 HarfBuzz 8.3.0 及 subset 库，
+许可证沿用原内核打包器的收集路径。锁定的旧内核另通过 `CXXFLAGS` 显式设置自带
+Brotli 头文件目录，避免内部引用落到系统旧版头文件；这些属于构建依赖和参数，
+不改变 `runtime-lock.json` 锁定的内核源码提交。
+
 两个干净容器使用各自发行版的 Python 安装同一个应用 wheel，发布任务依赖这两项
 检查成功。此处描述的是新的 CI 配置；完整原生构建与双系统结果须由实际工作流确认。
 

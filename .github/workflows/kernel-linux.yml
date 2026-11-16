@@ -97,6 +97,7 @@ jobs:
         id: toolchain
         run: |
           ci/linux/build.sh deps
+          bash ../ci/build_linux_harfbuzz.sh
           # NSS's build.sh runs plain `clang`; this also puts LLVM 21's tools first.
           echo "/usr/lib/llvm-21/bin" >> "$GITHUB_PATH"
           {
@@ -132,7 +133,11 @@ jobs:
           key: ${{ steps.donor.outputs.cache-primary-key }}
 
       - name: Build dist/js and libruyijs_client.so
-        run: ci/linux/build.sh shell
+        run: |
+          # The pinned checkout's CMake omits this vendor include directory;
+          # its Brotli headers must resolve each other, not bookworm's v1.0.9.
+          export CXXFLAGS="-I$GITHUB_WORKSPACE/kernel/vendor/compression-native/brotli/include ${CXXFLAGS:-}"
+          ci/linux/build.sh shell
 
       - name: Restore NSS and Neqo builds
         id: necko
