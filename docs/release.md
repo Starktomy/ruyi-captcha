@@ -46,8 +46,20 @@ Linux 工作流显式应用 `ci/patches/kernel-linux-cargo-artifacts.patch`，�
 `ci/cargo_artifacts.py`，让构建器读取 Cargo JSON 的实际产物路径；补丁只修改
 `tools/build_linux.py`，不修改原生运行时源码。已有该修复的内核无需再次应用。
 
+成功链接的原生运行时会立即保存独立缓存，后续 helper、打包或测试失败不必重新
+编译它。旧内核构建 helper 时临时添加 NSS 同目录的库搜索路径；最终打包器会为
+每个 ELF 写入相对搜索路径，安装验收会清除 `LD_LIBRARY_PATH`。
+
 两个干净容器使用各自发行版的 Python 安装同一个应用 wheel，发布任务依赖这两项
 检查成功。此处描述的是新的 CI 配置；完整原生构建与双系统结果须由实际工作流确认。
+
+Linux 应用打包和双系统验收由 `linux-application.yml` 独立执行，只依赖 Linux
+内核构建；Windows/macOS 的编译和 runner 排队不会阻塞这部分验收。完整发布仍须
+等待所有平台成功。该工作流也支持手动填写 `kernel_run_id`，复用现成的 Linux
+内核 artifact，并校验产物所在提交与当前应用的内核锁定一致。
+
+已完成的远端内核检查、实际应用包的双系统本地安装验证和仍在运行的步骤，见
+[2026-11-17 验证记录](linux-ci-validation-20261117.md)。
 
 2026-11-16 的本地验证包括全部 85 项应用测试、actionlint，以及 Debian 12 和
 Ubuntu 26.04 容器各 6 项真实 ELF 夹具检查（包括 DT_RELR 对 glibc 2.36 的要求）；同一份 Debian 编译的 C 测试库在两个
