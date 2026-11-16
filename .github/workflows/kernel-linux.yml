@@ -43,7 +43,7 @@ jobs:
         run: |
           apt-get update -qq
           apt-get install -y -qq --no-install-recommends \
-            ca-certificates curl git gnupg lsb-release sudo python3 python3-venv \
+            ca-certificates curl git gnupg lsb-release software-properties-common sudo python3 python3-venv \
             fontconfig fonts-dejavu-core fonts-liberation
           . /etc/os-release
           test "$VERSION_ID" = 12
