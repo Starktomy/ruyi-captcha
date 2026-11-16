@@ -94,5 +94,6 @@ jobs:
         run: |
           unset PYTHONPATH RUYIJS_SHELL LD_LIBRARY_PATH
           python3 -m venv /tmp/wheel-test
-          /tmp/wheel-test/bin/python -m pip install "$GITHUB_WORKSPACE"/wheelhouse/*.whl
+          application_wheel=("$GITHUB_WORKSPACE"/wheelhouse/*.whl)
+          /tmp/wheel-test/bin/python -m pip install "${application_wheel[0]}[api,test]"
           /tmp/wheel-test/bin/python "$GITHUB_WORKSPACE/ci/verify_wheel.py" --kind bundled
