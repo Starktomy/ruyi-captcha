@@ -28,6 +28,13 @@ CI 只在版本 tag 和手动触发时编译全部原生内核；日常 push/PR 
 发版不会自动跟随 kernel/main 漂移。升级内核时先更新 runtime-lock.json 中的提交和
 能力要求，完成验收，再发布新应用版本。失败的任一平台会阻止发布残缺的 release。
 
+当前应用锁定 fork 的 `1463bc5eaecc0224f0ed2098fca4534b7f13d0dd`，版本为
+0.4.1 / Firefox 160，上游底座为 `31cea48145d54ab4d2b9b1522e6288ff81c35f6f`。
+Linux 可复用内核仓库该提交已经通过 CI 的 artifact；`linux-application.yml` 的
+`kernel_repository` 填写 `Starktomy/ff-ruyijs`，`kernel_run_id` 填写 `43922863710`。
+工作流会核对源仓库和构建提交与当前锁定一致，打包后再核对实际运行版本及能力。
+新内核验收结果见 [0.4.1 升级记录](kernel-upgrade-0.4.1-20261117.md)。
+
 Linux 的 Firefox donor、原生库、NSS/Neqo 和内置 Python 3.14 都在
 `python:3.14-bookworm` 中编译，缓存键包含 bookworm/glibc236，避免恢复来自 Ubuntu
 24.04 的旧二进制。打包器沿用内核 wheel 的平台标签；内核和应用 wheel 均检查所有

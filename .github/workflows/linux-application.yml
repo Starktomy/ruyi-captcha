@@ -6,12 +6,19 @@ on:
       kernel_run_id:
         type: string
         default: ""
+      kernel_repository:
+        type: string
+        default: ""
   workflow_dispatch:
     inputs:
       kernel_run_id:
         description: Run containing a successful ruyijs-linux artifact for the locked kernel
         type: string
         required: true
+      kernel_repository:
+        description: Artifact repository (defaults to this application repository)
+        type: string
+        required: false
 
 permissions:
   contents: read
@@ -34,23 +41,32 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           KERNEL_RUN_ID: ${{ inputs.kernel_run_id || github.run_id }}
+          KERNEL_REPOSITORY: ${{ inputs.kernel_repository || github.repository }}
         run: |
-          artifact_ref=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$KERNEL_RUN_ID" --jq .head_sha)
-          gh api "repos/$GITHUB_REPOSITORY/contents/src/ruyi_captcha/runtime-lock.json?ref=$artifact_ref" \
-            -H 'Accept: application/vnd.github.raw+json' > "$RUNNER_TEMP/artifact-kernel-lock.json"
-          python - "$RUNNER_TEMP/artifact-kernel-lock.json" <<'PY'
-          import json, sys
+          artifact_ref=$(gh api "repos/$KERNEL_REPOSITORY/actions/runs/$KERNEL_RUN_ID" --jq .head_sha)
+          if [ "$KERNEL_REPOSITORY" = "$GITHUB_REPOSITORY" ]; then
+            gh api "repos/$GITHUB_REPOSITORY/contents/src/ruyi_captcha/runtime-lock.json?ref=$artifact_ref" \
+              -H 'Accept: application/vnd.github.raw+json' > "$RUNNER_TEMP/artifact-kernel-lock.json"
+          fi
+          python - "$artifact_ref" "$RUNNER_TEMP/artifact-kernel-lock.json" <<'PY'
+          import json, os, sys
           from pathlib import Path
-          actual = json.loads(Path(sys.argv[1]).read_text())
+          from urllib.parse import urlsplit
           expected = json.loads(Path('src/ruyi_captcha/runtime-lock.json').read_text())
-          assert (actual['commit'], actual['version']) == (expected['commit'], expected['version']), 'Kernel source pin mismatch'
-          print('Kernel source pin:', actual['commit'])
+          if os.environ['KERNEL_REPOSITORY'] == os.environ['GITHUB_REPOSITORY']:
+              actual = json.loads(Path(sys.argv[2]).read_text())
+              assert (actual['commit'], actual['version']) == (expected['commit'], expected['version']), 'Kernel source pin mismatch'
+          else:
+              assert os.environ['KERNEL_REPOSITORY'] == urlsplit(expected['repository']).path.strip('/'), 'Kernel repository mismatch'
+              assert sys.argv[1] == expected['commit'], 'Kernel build commit mismatch'
+          print('Kernel source pin:', expected['commit'])
           PY
       - uses: actions/download-artifact@v4
         with:
           name: ruyijs-linux
           path: kernel-artifact
           run-id: ${{ inputs.kernel_run_id || github.run_id }}
+          repository: ${{ inputs.kernel_repository || github.repository }}
           github-token: ${{ github.token }}
       - run: python -m pip install build 'setuptools>=77' 'packaging>=24.2' wheel
       - name: Embed the kernel and install the application wheel

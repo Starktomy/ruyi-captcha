@@ -25,6 +25,7 @@ else:
     assert info.bindings_source == "bundled"
     manifest = json.loads(files("ruyi_captcha._vendor").joinpath("kernel-build.json").read_text())
     lock = json.loads(files("ruyi_captcha").joinpath("runtime-lock.json").read_text())
+    assert info.version == lock["version"], (info.version, lock["version"])
     assert manifest["kernel_commit"] == lock["commit"]
     assert manifest["packaged_shell_sha256"] == info.sha256
     with bindings.Context(timeout=20) as context:

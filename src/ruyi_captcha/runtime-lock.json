@@ -1,9 +1,9 @@
 {
   "repository": "https://github.com/Starktomy/ff-ruyijs",
-  "commit": "3999528b6e441337f9566926f87227ae823ed62b",
-  "upstream_base": "0ab720142361ed2fafd42224f2c2772dc5d1f219",
-  "version": "0.3.5",
-  "linux_verified_sha256": "f94efdecce2d848439c85e6198aede14f4c8c45bffbeac764227119de3118081",
+  "commit": "1463bc5eaecc0224f0ed2098fca4534b7f13d0dd",
+  "upstream_base": "31cea48145d54ab4d2b9b1522e6288ff81c35f6f",
+  "version": "0.4.1",
+  "linux_verified_sha256": "2f82fb94971d373947817292f24472139bc24b32c7891a20a836fb5b29c35a58",
   "required_capabilities": [
     "trusted_types_default_html_script_url",
     "host_closed_shadow",

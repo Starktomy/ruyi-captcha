@@ -30,6 +30,8 @@ Linux 发版 CI 使用 Debian 12 编译环境，目标为 `manylinux_2_36_x86_64
 
 Python 3.10+。本机开发已配置 `/root/ff-ruyijs` 的兼容内核；其提交和已验证的
 Linux runtime SHA256 记录在 [runtime-lock.json](src/ruyi_captcha/runtime-lock.json)。
+当前锁定 fork 内核 **0.4.1 / Firefox 160**，精确提交为 `1463bc5`，保留所需的
+Trusted Types、closed Shadow DOM 和 iframe 输入兼容修复。
 
 ```sh
 cd /root/ruyi-captcha
@@ -41,8 +43,8 @@ python3 -m venv .venv
 
 从源码构建的默认包是轻量版。可先安装由所记录内核提交构建的匹配平台 kernel wheel，
 再安装本包；也可以直接安装上面的内置内核平台 wheel。
-上游原版 `ruyijs==0.3.5` 不包含必需的
-Trusted Types 补丁；启动检查会实际验证能力，不能只按版本号判断兼容性。
+请使用锁定的 fork 构建；启动检查会实际验证 Trusted Types 和输入能力，
+不能只按版本号判断兼容性。
 
 ## 模式一：接入已有 Python 流程
 
