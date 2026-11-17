@@ -1,5 +1,8 @@
 # Linux 构建与安装验证（2026-11-17）
 
+本报告记录升级前的 0.3.5 内核验收。应用现已锁定 0.4.1 / Firefox 160，
+新的运行版本及双系统远端验收见 [0.4.1 升级记录](kernel-upgrade-0.4.1-20261117.md)。
+
 Linux 构建改用 `python:3.14-bookworm`，包括原生内核、NSS/Neqo 及内置 Python。
 目标 wheel 为 `manylinux_2_36_x86_64`，不再依赖 Ubuntu 24.04 的 glibc 2.39。
 应用内核仍锁定 `3999528b6e441337f9566926f87227ae823ed62b`（0.3.5 / Firefox 159）。

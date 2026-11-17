@@ -22,5 +22,15 @@ Linux 打包流水线新增 `kernel_repository`，可从锁定的内核仓库复
 本地已完成源码应用回归（87 项通过）及新内置 wheel 的 101 个 ELF 检查，最高
 glibc 需求为 2.36。新内置包安装到独立环境后，实际运行版本为 0.4.1，原生散列与
 上表一致；能力探针、Python Context、API 健康及 runtime 接口检查通过，全部
-87 项应用测试通过、无跳过。远端双系统检查在本轮升级中继续验收。
+87 项应用测试通过、无跳过。
+
+[应用远端 CI](https://github.com/Starktomy/ruyi-captcha/actions/runs/44032135725)
+已通过应用打包、101 个 ELF 检查、87 项应用测试（无跳过），并在 Debian 12 /
+Python 3.11 和 Ubuntu 26.04 / Python 3.14 安装同一份内置包后，验证实际版本为
+0.4.1、原生散列及能力匹配，Python Context 和 API 健康/runtime 检查均通过。
+[应用 Python CI](https://github.com/Starktomy/ruyi-captcha/actions/runs/44032114245)
+也已通过。
+远端应用 wheel `ruyi_captcha-0.1.0-py3-none-manylinux_2_36_x86_64.whl` 的 SHA-256：
+`db30cc7339a4fa8834111c71428e57d0174a54a95e3e831efc481e8bc432ad69`。
+
 本轮没有新增线上验证码后台接受结果，也未创建发布 tag。
